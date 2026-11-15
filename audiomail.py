@@ -1,4 +1,4 @@
-"""AudioMail: cliente de e-mail acessivel para Windows (wxPython, Gmail)."""
+"""AudioMail: cliente de e-mail acessivel para Windows (wxPython, Gmail e outros provedores)."""
 import os
 import sys
 import socket
@@ -16,9 +16,16 @@ import sounds
 import speech
 import translator
 import updater
+import message_text as mt
+import webbrowser
 import i18n
 import ai_summary
 import legal
+import outbox
+import providers
+import compose_extras as cx
+from contacts import Contacts
+from common import data_dir
 from common import (DEFAULTS, config_path, default_sound_path, find_account, forget_password,
                     get_ai_api_key, load_config, make_icon, pick_sound_file, recall_password,
                     protect_local_value, remember_password, save_config, set_ai_api_key,
@@ -185,6 +192,10 @@ class MainFrame(wx.Frame):
         self.prompted_version = None
         self.translation = TranslationService(self)
         self.ai_summary = AISummaryService(self)
+        self.contacts = Contacts(os.path.join(data_dir(), "contatos.json"))
+        self.scheduled = outbox.Scheduled(data_dir())
+        self.pending_sends = []    # envios esperando o tempo de desfazer
+        self.sending_scheduled = set()
 
         sounds.ensure_default(default_sound_path())
         self.icon = make_icon()
@@ -335,6 +346,8 @@ class MainFrame(wx.Frame):
         self.add(m, "Apagar\tDel", lambda e: self.delete_selected())
         self.add(m, "Marcar como lida\tCtrl+Shift+L", lambda e: self.mark_selected(True))
         self.add(m, "Marcar como não lida\tCtrl+Shift+U", lambda e: self.mark_selected(False))
+        self.add(m, "Desfazer envio\tCtrl+Shift+Z", lambda e: self.undo_send())
+        self.add(m, "Mensagens agendadas", lambda e: self.open_scheduled())
         self.group_item = m.AppendCheckItem(wx.ID_ANY, i18n.tr("Agrupar por conversa\tCtrl+G"))
         self.group_item.Check(bool(self.setting("group_threads")))
         self.Bind(wx.EVT_MENU, self.on_toggle_group, self.group_item)
@@ -437,6 +450,7 @@ class MainFrame(wx.Frame):
     def shutdown(self):
         self.timer.Stop()
         self.reminder_timer.Stop()
+        self.flush_pending_sends()
         for acc in self.accounts:
             self.stop_watcher(acc)
             if acc.client:
@@ -498,6 +512,7 @@ class MainFrame(wx.Frame):
             for item in due:
                 self.toast("Lembrete", item.get("title", "AudioMail"))
                 self.announce("Lembrete: %s" % item.get("title", ""))
+        self.send_due_scheduled()
 
     # ---- tempo real e verificacao ----
     def apply_timer(self):
@@ -593,6 +608,14 @@ class MainFrame(wx.Frame):
                 self.announce("Não foi possível verificar agora." + suffix)
             return
         new = mc.find_new(msgs, acc.baseline) if acc.baseline is not None else []
+        if acc.baseline is None:
+            # a caixa de entrada inteira so na primeira vez de cada conta; depois, so as novas
+            key = "inbox_imported:" + acc.email.lower()
+            if not self.contacts.meta.get(key):
+                self.contacts.meta[key] = True
+                self.contacts_from_headers(acc, msgs, force_save=True)
+        else:
+            self.contacts_from_headers(acc, new)
         self.note_inbox(acc, msgs)
         if acc is self.active and acc.current_raw == "INBOX" and not acc.search:
             self.show_messages(msgs, keep=True)
@@ -853,7 +876,8 @@ class MainFrame(wx.Frame):
             active = self.cfg.get("active_email")
             auto.sort(key=lambda t: t[0]["email"] != active)  # a ultima conta ativa primeiro
             for a, pw in auto:
-                self.connect({"email": a["email"], "password": pw, "remember": True})
+                self.connect({"email": a["email"], "password": pw, "remember": True,
+                              "provider": a.get("provider") or "gmail", "server": a.get("server")})
         else:
             self.Show()
             self.ask_login()
@@ -866,7 +890,9 @@ class MainFrame(wx.Frame):
             email = self.cfg.get("last_email") or self.cfg.get("active_email", "")
         saved = find_account(self.cfg, email) if email else None
         dlg = LoginDialog(self, email=email,
-                          remember=saved.get("remember", True) if saved else True)
+                          remember=saved.get("remember", True) if saved else True,
+                          provider=saved.get("provider") if saved else None,
+                          server=saved.get("server") if saved else None)
         ok = dlg.ShowModal() == wx.ID_OK
         values = dlg.get_values() if ok else None
         dlg.Destroy()
@@ -879,8 +905,10 @@ class MainFrame(wx.Frame):
             self.quit()
 
     def connect(self, v, activate=False):
-        client = mc.MailClient(v["email"], v["password"], "imap.gmail.com", 993,
-                               "smtp.gmail.com", 465, "ssl")
+        server = providers.server_for({"provider": v.get("provider") or "gmail",
+                                       "server": v.get("server")})
+        client = mc.MailClient(v["email"], v["password"], server["imap_host"], server["imap_port"],
+                               server["smtp_host"], server["smtp_port"], server["security"])
 
         def work():
             client.connect()
@@ -902,6 +930,11 @@ class MainFrame(wx.Frame):
                 entry = {"email": v["email"]}
                 self.cfg["accounts"].append(entry)
             entry["remember"] = v["remember"]
+            entry["provider"] = v.get("provider") or "gmail"
+            if v.get("server"):
+                entry["server"] = v["server"]
+            else:
+                entry.pop("server", None)
             if v["remember"]:
                 if not remember_password(entry, v["password"]):
                     entry["remember"] = False
@@ -913,6 +946,8 @@ class MainFrame(wx.Frame):
                 self.activate(acc)
             self.start_watcher(acc)
             self.apply_timer()
+            self.import_sent_contacts(acc)
+            wx.CallLater(3000, self.send_due_scheduled)
 
         def fail(err):
             self.Show()
@@ -951,7 +986,7 @@ class MainFrame(wx.Frame):
         acc = self.active
         if not acc:
             return
-        ask = i18n.message_box("Remover a conta %s do AudioMail? As mensagens continuam no Gmail."
+        ask = i18n.message_box("Remover a conta %s do AudioMail? As mensagens continuam no servidor do e-mail."
                             % acc.email, "Confirmar", wx.YES_NO | wx.ICON_QUESTION, self)
         if ask != wx.YES:
             return
@@ -1124,22 +1159,74 @@ class MainFrame(wx.Frame):
                 self.set_unread(uids, False)
             newest = fulls[-1]
             attachments = [a for f in fulls for a in f["attachments"]]
-            sections = [(mc.message_header(f), f["body"]) for f in fulls]
+            bodies, links = mt.merge_links([(f["body"], f.get("links", [])) for f in fulls])
+            sections = [(mc.message_header(f), body) for f, body in zip(fulls, bodies)]
+            self.contacts_from_message(newest)
             prefix = "" if len(fulls) == 1 else "Conversa com %d mensagens, assunto %s" % (
                 len(fulls), mc.normalize_subject(newest["subject"]) or newest["subject"])
             text = mc.render_text(prefix, sections)
             self.SetStatusText("Mensagem aberta")
             dlg = ReadDialog(self, newest["subject"], text, attachments, self.announce,
                              sections=sections, prefix=prefix, translation=self.translation,
-                             auto_translate=auto_translate, ai_summary=self.ai_summary)
+                             auto_translate=auto_translate, ai_summary=self.ai_summary,
+                             links=links, unsubscribe=self.unsubscribe_action(acc, newest))
             dlg.ShowModal()
-            result = dlg.result
+            result, mailto = dlg.result, dlg.link_to_open
             dlg.Destroy()
-            if result:
+            if result == "mailto" and mailto:
+                address, subject, body = mt.mailto_parts(mailto)
+                self.compose(to=address, subject=subject, body=body)
+            elif result:
                 self.reply_to(newest, result == "replyall")
             self.list.SetFocus()
 
         self.run(work, done, "Abrindo mensagem")
+
+    def unsubscribe_action(self, acc, full):
+        """O que o botão Cancelar inscrição faz nesta mensagem, ou None se não der."""
+        options = mt.unsubscribe_options(full.get("list_unsubscribe"),
+                                         full.get("list_unsubscribe_post"), full.get("links", []))
+        if not options:
+            return None
+        sender = mc.short_sender(full["from"])
+
+        def open_page(parent):
+            url = options["https"] or options["link"]
+            if not url:
+                return False
+            try:
+                webbrowser.open(url)
+            except Exception:
+                return False
+            self.announce("A página de cancelamento foi aberta no navegador. Se ela pedir, "
+                          "confirme por lá.", box=True)
+            return True
+
+        def run(parent):
+            ask = i18n.message_box("Cancelar a inscrição e parar de receber os e-mails de %s?" % sender,
+                                   "Cancelar inscrição", wx.YES_NO | wx.ICON_QUESTION, parent)
+            if ask != wx.YES:
+                return
+            if options["one_click"]:
+                def done(ok):
+                    if ok:
+                        self.announce("Pronto. O pedido de cancelamento foi enviado para %s." % sender,
+                                      box=True)
+                    elif not open_page(parent):
+                        self.announce("O site não aceitou o cancelamento automático.", box=True)
+
+                self.run(lambda: mt.one_click_unsubscribe(options["https"]), done,
+                         "Cancelando a inscrição", lambda err: done(False))
+            elif options["mailto"] and acc.client:
+                address, subject, body = mt.mailto_parts(options["mailto"], "unsubscribe")
+                self.run(lambda: acc.client.send(address, "", "", subject, body),
+                         lambda _: self.announce("Pronto. O e-mail de cancelamento foi enviado.",
+                                                 box=True),
+                         "Cancelando a inscrição")
+            elif not open_page(parent):
+                self.announce("Não foi possível cancelar a inscrição.", box=True)
+
+        return run
 
     def edit_draft(self, client, raw, uid):
         def work():
@@ -1174,6 +1261,10 @@ class MainFrame(wx.Frame):
         if self.client:
             self.compose(**mc.build_reply(full, self.client.email, reply_all))
 
+    def save_quick_replies(self, replies):
+        self.cfg["quick_replies"] = [dict(r) for r in replies]
+        save_config(self.cfg)
+
     def compose(self, to="", cc="", bcc="", subject="", body="", in_reply_to=None,
                 references=None, attachments=None, draft=None, add_signature=True):
         acc = self.active
@@ -1185,16 +1276,228 @@ class MainFrame(wx.Frame):
         dlg = ComposeDialog(self, acc.client, self.announce, to=to, cc=cc, bcc=bcc,
                             subject=subject, body=body, in_reply_to=in_reply_to,
                             references=references, attachments=attachments, draft=draft,
-                            translation=self.translation)
+                            translation=self.translation, contacts=self.contacts,
+                            replies=self.setting("quick_replies"),
+                            save_replies=self.save_quick_replies,
+                            show_cc=self.setting("compose_show_cc"),
+                            undo_seconds=int(self.setting("undo_send_seconds") or 0))
         dlg.ShowModal()
-        result = dlg.result
+        result, outgoing, when, cc_shown = dlg.result, dlg.outgoing, dlg.when, dlg.cc_shown
+        draft, typed = dlg.draft, dlg.fields()
         dlg.Destroy()
+        if cc_shown != bool(self.setting("compose_show_cc")):
+            self.cfg["compose_show_cc"] = cc_shown
+            save_config(self.cfg)
+        if result in ("sent", "queued", "scheduled"):
+            self.contacts_from_outgoing(outbox.from_fields(outgoing or typed))
+        if result == "queued":
+            self.queue_send(acc, outbox.from_fields(outgoing), draft)
+        elif result == "scheduled":
+            self.schedule_send(acc, outbox.from_fields(outgoing), draft, when)
         if result == "sent":
             self.announce("Mensagem enviada.", box=True)
         if result and acc is self.active and (self.folder_has("\\drafts")
                                               or self.folder_has("\\sent")):
             self.refresh()
         self.list.SetFocus()
+
+    # ---- contatos ----
+    def contacts_from_headers(self, acc, msgs, force_save=False):
+        changed = [self.contacts.add_header(m.get("from_raw", ""), 1, skip=[acc.email]) for m in msgs]
+        if any(changed) or force_save:
+            self.contacts.save()
+
+    def contacts_from_message(self, full):
+        me = self.client.email if self.client else ""
+        changed = False
+        for name in ("from", "to", "cc"):
+            changed = self.contacts.add_header(full.get(name, ""), 1, skip=[me]) or changed
+        if changed:
+            self.contacts.save()
+
+    def contacts_from_outgoing(self, fields):
+        changed = False
+        for name in ("to", "cc", "bcc"):
+            changed = self.contacts.add_header((fields.get(name) or "").replace(";", ","), 3) or changed
+        if changed:
+            self.contacts.save()
+
+    def import_sent_contacts(self, acc):
+        """Na primeira vez de cada conta, aprende os contatos das mensagens enviadas."""
+        key = "sent_imported:" + acc.email.lower()
+        if self.contacts.meta.get(key) or not acc.client:
+            return
+        client = acc.client
+
+        def work():
+            try:
+                values = client.recent_recipients()
+            except Exception:
+                values = None
+            wx.CallAfter(done, values)
+
+        def done(values):
+            if not self or values is None:
+                return
+            for value in values:
+                self.contacts.add_header(value, 2, skip=[acc.email])
+            self.contacts.meta[key] = True
+            self.contacts.save()
+
+        threading.Thread(target=work, daemon=True).start()
+
+    # ---- desfazer envio ----
+    def queue_send(self, acc, fields, draft):
+        seconds = int(self.setting("undo_send_seconds") or 0)
+        item = {"acc": acc, "fields": fields, "draft": draft}
+        item["timer"] = wx.CallLater(seconds * 1000, self.send_pending, item)
+        self.pending_sends.append(item)
+        self.announce("Enviando em %d segundos. Para desfazer, Ctrl+Shift+Z." % seconds)
+
+    def undo_send(self):
+        if not self.pending_sends:
+            self.announce("Não há envio para desfazer.")
+            return
+        item = self.pending_sends.pop()
+        item["timer"].Stop()
+        self.announce("Envio desfeito.")
+        self.reopen(item)
+
+    def reopen(self, item):
+        f = item["fields"]
+        if item["acc"] is not self.active and item["acc"] in self.accounts:
+            self.activate(item["acc"])
+        self.compose(to=f["to"], cc=f["cc"], bcc=f["bcc"], subject=f["subject"], body=f["body"],
+                     in_reply_to=f["in_reply_to"], references=f["references"],
+                     attachments=f["attachments"], draft=item["draft"], add_signature=False)
+
+    def deliver(self, client, fields, draft):
+        client.send(*outbox.message_args(fields))
+        if draft:
+            try:
+                client.delete_permanent(*draft)
+            except Exception:
+                pass
+
+    def send_pending(self, item):
+        if item not in self.pending_sends:
+            return
+        self.pending_sends.remove(item)
+        acc = item["acc"]
+        if not acc.client:
+            self.send_failed(item, mc.MailError("A conta está desconectada."))
+            return
+
+        def done(_):
+            self.announce("Mensagem enviada.")
+            if acc is self.active and self.folder_has("\\sent"):
+                self.refresh()
+
+        self.run(lambda: self.deliver(acc.client, item["fields"], item["draft"]), done,
+                 "Enviando mensagem", lambda err: self.send_failed(item, err))
+
+    def send_failed(self, item, err):
+        ask = i18n.message_box("A mensagem não foi enviada.\n\n%s\n\nAbrir a mensagem de novo para "
+                               "tentar outra vez?" % err, "Erro ao enviar",
+                               wx.YES_NO | wx.ICON_ERROR, self)
+        if ask == wx.YES:
+            self.reopen(item)
+
+    def flush_pending_sends(self):
+        """Ao fechar o AudioMail, o que estava esperando o tempo de desfazer sai na hora."""
+        for item in list(self.pending_sends):
+            item["timer"].Stop()
+            self.pending_sends.remove(item)
+            if item["acc"].client:
+                try:
+                    self.deliver(item["acc"].client, item["fields"], item["draft"])
+                except Exception:
+                    pass
+
+    # ---- envio agendado ----
+    def schedule_send(self, acc, fields, draft, when):
+        try:
+            self.scheduled.add(acc.email, fields, time.mktime(when.timetuple()), draft)
+        except OSError as e:
+            i18n.message_box("Não foi possível agendar: %s" % e, "Erro", wx.OK | wx.ICON_ERROR, self)
+            return
+        self.announce("Mensagem agendada para %s." % when.strftime("%d/%m/%Y %H:%M"), box=True)
+
+    def send_due_scheduled(self):
+        if not self:
+            return
+        connected = {a.email.lower(): a for a in self.accounts if a.client}
+        for item in self.scheduled.due(connected):
+            if item["id"] in self.sending_scheduled:
+                continue
+            self.sending_scheduled.add(item["id"])
+            self.send_scheduled(connected[item["account"].lower()], item)
+
+    def send_scheduled(self, acc, item):
+        client = acc.client
+
+        def work():
+            try:
+                self.deliver(client, item, item.get("draft"))
+                err = None
+            except Exception as e:
+                err = e
+            wx.CallAfter(done, err)
+
+        def done(err):
+            self.sending_scheduled.discard(item["id"])
+            if not self:
+                return
+            to = item.get("to") or item.get("cc") or item.get("bcc") or ""
+            if err is None:
+                self.scheduled.remove(item["id"])
+                self.toast("Mensagem agendada enviada", "Para %s: %s" % (to, item.get("subject") or ""))
+                self.announce("Mensagem agendada enviada para %s." % to)
+            else:
+                first = not item.get("error")
+                self.scheduled.failed(item["id"], err)
+                if first:
+                    self.toast("Mensagem agendada não saiu", "Nova tentativa em 5 minutos. %s" % err)
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def open_scheduled(self):
+        many = len({it["account"] for it in self.scheduled.items}) > 1
+        items = [dict(it, show_account=many) for it in self.scheduled.items]
+        dlg = cx.ScheduledDialog(self, items)
+        action = dlg.action if dlg.ShowModal() == wx.ID_OK else None
+        dlg.Destroy()
+        if not action:
+            return
+        what, chosen = action
+        item = self.scheduled.get(chosen["id"])
+        if item is None or item["id"] in self.sending_scheduled:
+            return
+        acc = next((a for a in self.accounts if a.email.lower() == item["account"].lower()), None)
+        if acc is None or not acc.client:
+            i18n.message_box("A conta %s não está conectada." % item["account"], "Aviso",
+                             wx.OK | wx.ICON_WARNING, self)
+            return
+        if what == "send":
+            self.sending_scheduled.add(item["id"])
+            self.send_scheduled(acc, item)
+        elif what == "edit":
+            self.scheduled.remove(item["id"], keep_files=True)
+            if acc is not self.active:
+                self.activate(acc)
+            self.compose(to=item["to"], cc=item["cc"], bcc=item["bcc"], subject=item["subject"],
+                         body=item["body"], in_reply_to=item["in_reply_to"],
+                         references=item["references"], attachments=item["attachments"],
+                         draft=item.get("draft"), add_signature=False)
+        elif what == "cancel":
+            def keep_draft():
+                acc.client.save_draft(*outbox.message_args(item), old=item.get("draft"))
+
+            def done(_):
+                self.scheduled.remove(item["id"])
+                self.announce("Agendamento cancelado. A mensagem está nos rascunhos.")
+
+            self.run(keep_draft, done, "Cancelando o agendamento")
 
     # ---- apagar e marcar ----
     def delete_selected(self):

@@ -7,10 +7,14 @@ import webbrowser
 import wx
 
 import mail_core as mc
+import message_text as mt
 import sounds
 import translator
 import i18n
 import support
+import compose_extras as cx
+import providers
+import contacts as ct
 from common import default_sound_path, get_ai_api_key, pick_sound_file, set_name
 
 
@@ -19,24 +23,52 @@ from common import default_sound_path, get_ai_api_key, pick_sound_file, set_name
 APP_PASSWORD_URL = "https://myaccount.google.com/apppasswords"
 
 class LoginDialog(wx.Dialog):
-    """Entrada so para Gmail: e-mail e senha de app."""
+    """Entrada: provedor, e-mail e senha (de app). "Outro" pede os servidores."""
 
-    def __init__(self, parent, email="", remember=True, title=i18n.tr("Adicionar conta do Gmail")):
+    def __init__(self, parent, email="", remember=True, title="Adicionar conta de e-mail",
+                 provider=None, server=None):
         super().__init__(parent, title=i18n.tr(title))
-        self.SetMinSize((440, -1))
+        self.SetMinSize((460, -1))
+        self.provider_keys = providers.KEYS
+        self.typed_provider = bool(provider)
         grid = wx.FlexGridSizer(cols=2, vgap=6, hgap=8)
         grid.AddGrowableCol(1, 1)
 
-        def row(label, make):
+        def row(label, make, target=grid, parent_win=self):
             label = i18n.tr(label)
-            lbl = wx.StaticText(self, label=label)  # rotulo criado antes do campo
-            ctrl = set_name(make(), label)
-            grid.Add(lbl, 0, wx.ALIGN_CENTER_VERTICAL)
-            grid.Add(ctrl, 1, wx.EXPAND)
-            return ctrl
+            lbl = wx.StaticText(parent_win, label=label)  # rotulo criado antes do campo
+            ctrl = set_name(make(parent_win), label)
+            target.Add(lbl, 0, wx.ALIGN_CENTER_VERTICAL)
+            target.Add(ctrl, 1, wx.EXPAND)
+            return lbl, ctrl
 
-        self.email = row("E-mail", lambda: wx.TextCtrl(self, value=email))
-        self.password = row("Senha de app", lambda: wx.TextCtrl(self, style=wx.TE_PASSWORD))
+        _, self.provider = row("Provedor", lambda p: wx.Choice(
+            p, choices=[i18n.tr(providers.get(k)["name"]) for k in self.provider_keys]))
+        _, self.email = row("E-mail", lambda p: wx.TextCtrl(p, value=email))
+        self.password_label, self.password = row("Senha de app",
+                                                 lambda p: wx.TextCtrl(p, style=wx.TE_PASSWORD))
+
+        # servidores, so para "Outro"
+        self.server_panel = wx.Panel(self)
+        sgrid = wx.FlexGridSizer(cols=2, vgap=6, hgap=8)
+        sgrid.AddGrowableCol(1, 1)
+        server = server or {}
+        _, self.imap_host = row("Servidor IMAP (receber)", lambda p: wx.TextCtrl(
+            p, value=server.get("imap_host", "")), sgrid, self.server_panel)
+        _, self.imap_port = row("Porta IMAP", lambda p: wx.SpinCtrl(
+            p, min=1, max=65535, initial=int(server.get("imap_port", 993) or 993)), sgrid, self.server_panel)
+        _, self.smtp_host = row("Servidor SMTP (enviar)", lambda p: wx.TextCtrl(
+            p, value=server.get("smtp_host", "")), sgrid, self.server_panel)
+        _, self.smtp_port = row("Porta SMTP", lambda p: wx.SpinCtrl(
+            p, min=1, max=65535, initial=int(server.get("smtp_port", 587) or 587)), sgrid, self.server_panel)
+        self.security_codes = list(providers.SECURITY)
+        _, self.security = row("Segurança do envio", lambda p: wx.Choice(
+            p, choices=[i18n.tr("SSL (porta 465)"), i18n.tr("STARTTLS (porta 587)")]),
+            sgrid, self.server_panel)
+        self.security.SetSelection(self.security_codes.index(server.get("security", "starttls"))
+                                   if server.get("security") in self.security_codes else 1)
+        self.server_panel.SetSizer(sgrid)
+
         self.remember = wx.CheckBox(self, label=i18n.tr("Lembrar a senha neste computador"))
         self.remember.SetValue(bool(remember))
         self.site_btn = wx.Button(self, label=i18n.tr("Criar senha de app (abre o site do Google)"))
@@ -49,41 +81,96 @@ class LoginDialog(wx.Dialog):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(grid, 0, wx.EXPAND | wx.ALL, 12)
+        sizer.Add(self.server_panel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 12)
         sizer.Add(self.remember, 0, wx.LEFT | wx.RIGHT, 12)
         sizer.Add(self.site_btn, 0, wx.ALL, 12)
         sizer.Add(buttons, 0, wx.EXPAND | wx.ALL, 12)
-        self.SetSizerAndFit(sizer)
+        self.SetSizer(sizer)
+
+        key = provider or providers.guess(email) or "gmail"
+        self.provider.SetSelection(self.provider_keys.index(key) if key in self.provider_keys else 0)
+        self.provider.Bind(wx.EVT_CHOICE, lambda e: self.on_provider(manual=True))
+        self.email.Bind(wx.EVT_TEXT, self.on_email_text)
+        self.on_provider()
         self.CentreOnParent()
-        (self.password if email else self.email).SetFocus()
+        (self.password if email else self.provider).SetFocus()
+
+    def current(self):
+        return providers.get(self.provider_keys[self.provider.GetSelection()])
+
+    def on_email_text(self, evt):
+        evt.Skip()
+        if self.typed_provider:
+            return
+        key = providers.guess(self.email.GetValue())
+        if key and self.provider_keys[self.provider.GetSelection()] != key:
+            self.provider.SetSelection(self.provider_keys.index(key))
+            self.on_provider()
+
+    def on_provider(self, manual=False):
+        if manual:
+            self.typed_provider = True
+        p = self.current()
+        label = i18n.tr("Senha de app" if p["app_password"] else "Senha")
+        self.password_label.SetLabel(label)
+        set_name(self.password, label)
+        self.server_panel.Show(p["key"] == "other")
+        if p["key"] == "gmail":
+            self.site_btn.SetLabel(i18n.tr("Criar senha de app (abre o site do Google)"))
+        else:
+            self.site_btn.SetLabel(i18n.tr("Criar senha de app (abre o site do %s)") % p["name"])
+        self.site_btn.Show(bool(p["site"]))
+        self.Fit()
+        self.Layout()
 
     def on_open_site(self, evt=None):
-        """Abre no navegador a pagina onde o Google cria as senhas de app."""
+        """Abre no navegador a pagina onde o provedor cria as senhas de app."""
+        url = self.current()["site"] or APP_PASSWORD_URL
         try:
-            opened = webbrowser.open(APP_PASSWORD_URL)
+            opened = webbrowser.open(url)
         except Exception:
             opened = False
         if not opened:
             i18n.message_box("Não consegui abrir o navegador. Abra este endereço você mesmo:\n\n%s"
-                          % APP_PASSWORD_URL, "Senha de app", wx.OK | wx.ICON_INFORMATION, self)
+                          % url, "Senha de app", wx.OK | wx.ICON_INFORMATION, self)
+
+    def server(self):
+        return {"imap_host": self.imap_host.GetValue().strip(), "imap_port": self.imap_port.GetValue(),
+                "smtp_host": self.smtp_host.GetValue().strip(), "smtp_port": self.smtp_port.GetValue(),
+                "security": self.security_codes[self.security.GetSelection()]}
 
     def on_ok(self, evt):
-        if "@" not in self.email.GetValue():
+        address = self.email.GetValue()
+        if "@" not in address:
             i18n.message_box("Informe o e-mail completo, com o arroba.", "Aviso",
                           wx.OK | wx.ICON_WARNING, self)
             self.email.SetFocus()
             return
+        if providers.is_microsoft(address):
+            i18n.message_box("Contas da Microsoft (Outlook, Hotmail, Live) ainda não funcionam no "
+                             "AudioMail: a Microsoft só deixa entrar pelo site dela.", "Aviso",
+                             wx.OK | wx.ICON_WARNING, self)
+            self.email.SetFocus()
+            return
         if not self.password.GetValue().strip():
-            i18n.message_box("Informe a senha de app do Google.", "Aviso",
-                          wx.OK | wx.ICON_WARNING, self)
+            i18n.message_box("Informe a senha.", "Aviso", wx.OK | wx.ICON_WARNING, self)
             self.password.SetFocus()
+            return
+        if self.current()["key"] == "other" and not providers.valid_server(self.server()):
+            i18n.message_box("Confira os servidores IMAP e SMTP e as portas.", "Aviso",
+                             wx.OK | wx.ICON_WARNING, self)
+            self.imap_host.SetFocus()
             return
         evt.Skip()
 
     def get_values(self):
+        key = self.current()["key"]
         return {
             "email": self.email.GetValue().strip(),
             "password": self.password.GetValue(),
             "remember": self.remember.GetValue(),
+            "provider": key,
+            "server": self.server() if key == "other" else None,
         }
 
 
@@ -224,6 +311,15 @@ class SettingsDialog(wx.Dialog):
         self.signature = set_name(wx.TextCtrl(panel, value=settings.get("signature", ""),
                                style=wx.TE_MULTILINE, size=(-1, 70)), label)
         group.Add(self.signature, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, 8)
+        label = i18n.tr("Tempo para desfazer o envio")
+        group.Add(wx.StaticText(panel, label=label), 0, wx.LEFT | wx.TOP, 8)
+        self.undo_choices = [0, 5, 10, 20, 30]
+        self.undo_send = set_name(wx.Choice(panel, choices=[
+            i18n.tr("Desligado") if n == 0 else i18n.tr("%d segundos") % n for n in self.undo_choices]),
+            label)
+        current = settings.get("undo_send_seconds", 10)
+        self.undo_send.SetSelection(self.undo_choices.index(current) if current in self.undo_choices else 2)
+        group.Add(self.undo_send, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
         scroll.SetSizer(content)
         outer.Add(scroll, 1, wx.EXPAND | wx.ALL, 8)
@@ -294,6 +390,7 @@ class SettingsDialog(wx.Dialog):
             "translate_consent": self.translate_consent.GetValue(),
             "ui_language": i18n.LANGUAGES[self.ui_language.GetSelection()][0],
             "signature": self.signature.GetValue().strip(),
+            "undo_send_seconds": self.undo_choices[self.undo_send.GetSelection()],
             "ai_summary_provider": self.ai_provider_codes[self.ai_provider.GetSelection()],
             "ai_summary_model": self.ai_model.GetValue().strip(),
             "ai_summary_endpoint": self.ai_endpoint.GetValue().strip(),
@@ -318,7 +415,8 @@ class ReadDialog(wx.Dialog):
     """Mostra uma mensagem (ou conversa) e permite responder e mexer nos anexos."""
 
     def __init__(self, parent, title, text, attachments, announce, sections=None,
-                 prefix="", translation=None, auto_translate=False, ai_summary=None):
+                 prefix="", translation=None, auto_translate=False, ai_summary=None,
+                 links=None, unsubscribe=None):
         super().__init__(parent, title=i18n.tr(title),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.result = None
@@ -334,12 +432,31 @@ class ReadDialog(wx.Dialog):
         self.busy = False
         self.translate_btn = None
         self.summary_btn = None
+        self.links = list(links or [])
+        self.unsubscribe = unsubscribe   # funcao(parent) ou None
+        self.link_to_open = None          # mailto: escolhido (o AudioMail abre a escrita)
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.text = set_name(
             wx.TextCtrl(self, value=text,
                         style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_RICH2), "Mensagem")
         sizer.Add(self.text, 1, wx.EXPAND | wx.ALL, 10)
+        self.text.Bind(wx.EVT_KEY_DOWN, self.on_text_key)
+
+        # Links da mensagem: no texto aparecem como "[link N]"; aqui, com o site
+        # de destino, para abrir com Enter sem copiar nada.
+        self.link_list = None
+        if self.links:
+            lbl = wx.StaticText(self, label=i18n.tr("Links"))
+            self.link_list = set_name(
+                wx.ListBox(self, choices=[mt.link_label(n, t, u)
+                                          for n, (t, u) in enumerate(self.links, 1)],
+                           size=(-1, 90)), i18n.tr("Links"))
+            self.link_list.SetSelection(0)
+            self.link_list.Bind(wx.EVT_LISTBOX_DCLICK, self.on_open_link)
+            self.link_list.Bind(wx.EVT_KEY_DOWN, self.on_link_key)
+            sizer.Add(lbl, 0, wx.LEFT, 10)
+            sizer.Add(self.link_list, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
 
         self.att_list = None
         if attachments:
@@ -354,7 +471,7 @@ class ReadDialog(wx.Dialog):
         row = wx.BoxSizer(wx.HORIZONTAL)
 
         def button(label, handler, ident=wx.ID_ANY):
-            b = wx.Button(self, ident, label)
+            b = wx.Button(self, ident, i18n.tr(label))
             if handler:
                 b.Bind(wx.EVT_BUTTON, handler)
             row.Add(b, 0, wx.RIGHT, 8)
@@ -366,6 +483,10 @@ class ReadDialog(wx.Dialog):
             self.translate_btn = button("Traduzir", self.on_translate)
         if ai_summary:
             self.summary_btn = button("Resumir com IA", self.on_summary)
+        if self.links:
+            button("Abrir link", self.on_open_link)
+        if unsubscribe:
+            button("Cancelar inscrição", lambda e: self.unsubscribe(self))
         if attachments:
             button("Abrir anexo", self.on_open_att)
             button("Salvar anexo", self.on_save_att)
@@ -383,6 +504,53 @@ class ReadDialog(wx.Dialog):
     def finish(self, what):
         self.result = what
         self.EndModal(wx.ID_OK)
+
+    # ---- links ----
+    def open_url(self, url):
+        """Abre o link no navegador; um mailto: abre a escrita do AudioMail."""
+        if not url:
+            return
+        if url.lower().startswith("mailto:"):
+            self.link_to_open = url
+            self.finish("mailto")
+            return
+        if not mt.is_safe_link(url):
+            self.announce("Este link não pode ser aberto.")
+            return
+        try:
+            opened = webbrowser.open(url)
+        except Exception:
+            opened = False
+        if opened:
+            self.announce("Abrindo %s no navegador." % mt.domain_of(url))
+        else:
+            i18n.message_box("Não consegui abrir o navegador. Abra este endereço você mesmo:\n\n%s"
+                             % url, "Links", wx.OK | wx.ICON_INFORMATION, self)
+
+    def on_open_link(self, evt=None):
+        if self.link_list is None:
+            return
+        i = self.link_list.GetSelection()
+        if i != wx.NOT_FOUND:
+            self.open_url(self.links[i][1])
+
+    def on_link_key(self, evt):
+        if evt.GetKeyCode() in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+            self.on_open_link()
+        else:
+            evt.Skip()
+
+    def on_text_key(self, evt):
+        """Ctrl+Enter no texto abre o link da linha onde o cursor está."""
+        if evt.GetKeyCode() in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER) and evt.ControlDown():
+            _, _, line_no = self.text.PositionToXY(self.text.GetInsertionPoint())
+            url = mt.link_on_line(self.text.GetLineText(line_no), self.links)
+            if url:
+                self.open_url(url)
+            else:
+                self.announce("Esta linha não tem link.")
+            return
+        evt.Skip()
 
     # ---- traducao ----
     def show_text(self, text):
@@ -690,7 +858,8 @@ class MyTicketsDialog(wx.Dialog):
 class ComposeDialog(wx.Dialog):
     def __init__(self, parent, client, announce, to="", cc="", bcc="", subject="",
                  body="", in_reply_to=None, references=None, attachments=None, draft=None,
-                 translation=None):
+                 translation=None, contacts=None, replies=None, save_replies=None,
+                 show_cc=False, undo_seconds=0):
         super().__init__(parent, title=i18n.tr("Nova mensagem"),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.client = client
@@ -704,9 +873,17 @@ class ComposeDialog(wx.Dialog):
         self.undo_btn = None
         self.undo_texts = None      # (assunto, texto) de antes da traducao
         self.busy = False
-        self.result = None          # "sent", "draft" ou None
+        self.result = None          # "sent", "queued", "scheduled", "draft" ou None
+        self.outgoing = None        # o que sai, quando result e "queued" ou "scheduled"
+        self.when = None            # horario do envio agendado (datetime)
+        self.contacts = contacts
+        self.replies = replies if replies is not None else []
+        self.save_replies = save_replies
+        self.undo_seconds = undo_seconds
+        self.labels = {}
 
         sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer = sizer
 
         def field(label, make, proportion=0):
             label = i18n.tr(label)
@@ -714,11 +891,30 @@ class ComposeDialog(wx.Dialog):
             ctrl = set_name(make(), label)
             sizer.Add(lbl, 0, wx.LEFT | wx.TOP, 10)
             sizer.Add(ctrl, proportion, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
+            self.labels[ctrl] = lbl
             return ctrl
 
         self.to = field("Para", lambda: wx.TextCtrl(self, value=to))
+        # Contatos e cópia/cópia oculta logo depois do Para, na ordem do Tab.
+        row = wx.BoxSizer(wx.HORIZONTAL)
+        self.contacts_btn = wx.Button(self, label=i18n.tr("Contatos (Ctrl+K)"))
+        self.cc_btn = wx.Button(self, label=i18n.tr("Mostrar cópia e cópia oculta (Ctrl+Shift+C)"))
+        self.contacts_btn.Bind(wx.EVT_BUTTON, self.on_contacts)
+        self.cc_btn.Bind(wx.EVT_BUTTON, self.on_toggle_cc)
+        row.Add(self.contacts_btn, 0, wx.RIGHT, 8)
+        row.Add(self.cc_btn, 0)
+        sizer.Add(row, 0, wx.LEFT | wx.TOP, 10)
+        self.contacts_btn.Show(contacts is not None)
         self.cc = field("Cópia", lambda: wx.TextCtrl(self, value=cc))
         self.bcc = field("Cópia oculta", lambda: wx.TextCtrl(self, value=bcc))
+        self.address_field = self.to
+        for ctrl in (self.to, self.cc, self.bcc):
+            ctrl.Bind(wx.EVT_SET_FOCUS, self.on_address_focus)
+            if contacts is not None:
+                try:
+                    ctrl.AutoComplete(cx.AddressCompleter(contacts))
+                except Exception:
+                    pass
         self.subject = field("Assunto", lambda: wx.TextCtrl(self, value=subject))
         self.body = field("Texto da mensagem",
                           lambda: wx.TextCtrl(self, value=body,
@@ -733,6 +929,12 @@ class ComposeDialog(wx.Dialog):
         row.Add(self.remove_btn, 0)
         sizer.Add(row, 0, wx.LEFT | wx.TOP, 10)
 
+        row = wx.BoxSizer(wx.HORIZONTAL)
+        self.replies_btn = wx.Button(self, label=i18n.tr("Respostas prontas (Ctrl+Shift+P)"))
+        self.replies_btn.Bind(wx.EVT_BUTTON, self.on_replies)
+        row.Add(self.replies_btn, 0)
+        sizer.Add(row, 0, wx.LEFT | wx.TOP, 10)
+
         if translation:
             row = wx.BoxSizer(wx.HORIZONTAL)
             self.translate_btn = wx.Button(self, label=i18n.tr("Traduzir texto"))
@@ -745,14 +947,16 @@ class ComposeDialog(wx.Dialog):
             sizer.Add(row, 0, wx.LEFT | wx.TOP, 10)
 
         self.send_btn = wx.Button(self, label=i18n.tr("Enviar"))
+        self.schedule_btn = wx.Button(self, label=i18n.tr("Agendar envio"))
         self.draft_btn = wx.Button(self, label=i18n.tr("Salvar rascunho"))
         cancel = wx.Button(self, wx.ID_CANCEL, i18n.tr("Cancelar"))
         self.send_btn.Bind(wx.EVT_BUTTON, self.on_send)
+        self.schedule_btn.Bind(wx.EVT_BUTTON, self.on_schedule)
         self.draft_btn.Bind(wx.EVT_BUTTON, self.on_save_draft)
         cancel.Bind(wx.EVT_BUTTON, self.on_cancel)
         self.Bind(wx.EVT_CLOSE, self.on_cancel)
         row = wx.BoxSizer(wx.HORIZONTAL)
-        for b in (self.send_btn, self.draft_btn, cancel):
+        for b in (self.send_btn, self.schedule_btn, self.draft_btn, cancel):
             row.Add(b, 0, wx.RIGHT, 8)
         sizer.Add(row, 0, wx.ALL, 10)
         self.SetSizer(sizer)
@@ -760,12 +964,22 @@ class ComposeDialog(wx.Dialog):
         self.CentreOnParent()
         self.refresh_attachments()
 
-        # Ctrl+Enter envia, Ctrl+S salva o rascunho, de qualquer campo
+        # Ctrl+Enter envia, Ctrl+S salva o rascunho, Ctrl+K contatos,
+        # Ctrl+Shift+C cópia e cópia oculta, Ctrl+Shift+P respostas prontas
         self.Bind(wx.EVT_MENU, self.on_send, id=self.send_btn.GetId())
         self.Bind(wx.EVT_MENU, self.on_save_draft, id=self.draft_btn.GetId())
+        self.Bind(wx.EVT_MENU, self.on_contacts, id=self.contacts_btn.GetId())
+        self.Bind(wx.EVT_MENU, self.on_toggle_cc, id=self.cc_btn.GetId())
+        self.Bind(wx.EVT_MENU, self.on_replies, id=self.replies_btn.GetId())
         self.SetAcceleratorTable(wx.AcceleratorTable([
             wx.AcceleratorEntry(wx.ACCEL_CTRL, wx.WXK_RETURN, self.send_btn.GetId()),
-            wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("S"), self.draft_btn.GetId())]))
+            wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("S"), self.draft_btn.GetId()),
+            wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("K"), self.contacts_btn.GetId()),
+            wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("C"), self.cc_btn.GetId()),
+            wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("P"), self.replies_btn.GetId())]))
+        # Cópia e cópia oculta ficam escondidas, a não ser que já tenham algo
+        # ou que a pessoa tenha deixado aparecendo da última vez.
+        self.set_cc_visible(bool(show_cc or cc.strip() or bcc.strip()))
 
         self.snapshot = self.state()
         if not to:
@@ -773,6 +987,66 @@ class ComposeDialog(wx.Dialog):
         else:
             self.body.SetFocus()
             self.body.SetInsertionPoint(0)
+
+    # ---- copia, contatos e respostas prontas ----
+    def set_cc_visible(self, visible):
+        self.cc_shown = visible
+        for ctrl in (self.cc, self.bcc):
+            ctrl.Show(visible)
+            self.labels[ctrl].Show(visible)
+        self.cc_btn.SetLabel(i18n.tr("Esconder cópia e cópia oculta (Ctrl+Shift+C)") if visible
+                             else i18n.tr("Mostrar cópia e cópia oculta (Ctrl+Shift+C)"))
+        self.Layout()
+
+    def on_toggle_cc(self, evt=None):
+        if self.cc_shown and (self.cc.GetValue().strip() or self.bcc.GetValue().strip()):
+            self.announce("Os campos Cópia e Cópia oculta têm endereços; apague-os antes de esconder.")
+            self.cc.SetFocus()
+            return
+        self.set_cc_visible(not self.cc_shown)
+        if self.cc_shown:
+            self.cc.SetFocus()
+            self.announce("Campos Cópia e Cópia oculta mostrados.")
+        else:
+            if self.address_field in (self.cc, self.bcc):
+                self.address_field = self.to
+            self.to.SetFocus()
+            self.announce("Campos Cópia e Cópia oculta escondidos.")
+
+    def on_address_focus(self, evt):
+        self.address_field = evt.GetEventObject()
+        evt.Skip()
+
+    def on_contacts(self, evt=None):
+        if self.contacts is None:
+            return
+        target = self.address_field
+        name = self.labels[target].GetLabel()
+        dlg = cx.ContactPickerDialog(self, self.contacts, name)
+        chosen = dlg.chosen if dlg.ShowModal() == wx.ID_OK else None
+        dlg.Destroy()
+        if chosen:
+            target.SetValue(ct.append_address(target.GetValue(), chosen))
+            target.SetInsertionPointEnd()
+            self.announce("%s adicionado em %s." % (chosen, name))
+        target.SetFocus()
+
+    def on_replies(self, evt=None):
+        if self.save_replies is None:
+            return
+        start, end = self.body.GetSelection()
+        selected = self.body.GetStringSelection() if end > start else ""
+        dlg = cx.QuickRepliesDialog(self, self.replies, self.save_and_keep_replies, selected)
+        chosen = dlg.chosen if dlg.ShowModal() == wx.ID_OK else None
+        dlg.Destroy()
+        if chosen:
+            self.body.WriteText(chosen)
+            self.announce("Resposta pronta inserida.")
+        self.body.SetFocus()
+
+    def save_and_keep_replies(self, replies):
+        self.replies = [dict(r) for r in replies]
+        self.save_replies(self.replies)
 
     # ---- estado ----
     def state(self):
@@ -784,7 +1058,7 @@ class ComposeDialog(wx.Dialog):
 
     def set_busy(self, busy):
         self.busy = busy
-        for b in (self.send_btn, self.draft_btn, self.translate_btn):
+        for b in (self.send_btn, self.schedule_btn, self.draft_btn, self.translate_btn):
             if b is not None:
                 b.Enable(not busy)
 
@@ -878,7 +1152,7 @@ class ComposeDialog(wx.Dialog):
             total = sum(self.size_of(p) for p in self.attach)
             self.refresh_attachments(len(self.attach) - 1)
             if total > mc.MAX_ATTACH:
-                i18n.message_box("Os anexos passam do limite do Gmail (cerca de 18 MB no total). "
+                i18n.message_box("Os anexos passam do limite de envio (cerca de 18 MB no total). "
                               "Remova algum antes de enviar.", "Aviso",
                               wx.OK | wx.ICON_WARNING, self)
             else:
@@ -901,20 +1175,39 @@ class ComposeDialog(wx.Dialog):
                 self.subject.GetValue(), self.body.GetValue(),
                 self.in_reply_to, self.references, list(self.attach))
 
-    def on_send(self, evt):
-        if self.busy:
-            return
+    def ready_to_send(self):
+        """Confere destinatário e assunto antes de enviar ou agendar."""
         if not (self.to.GetValue().strip() or self.cc.GetValue().strip()
                 or self.bcc.GetValue().strip()):
             i18n.message_box("Informe o destinatário.", "Aviso", wx.OK | wx.ICON_WARNING, self)
             self.to.SetFocus()
-            return
+            return False
         if not self.subject.GetValue().strip():
             ask = i18n.message_box("A mensagem está sem assunto. Enviar assim mesmo?",
                                 "Confirmar", wx.YES_NO | wx.ICON_QUESTION, self)
             if ask != wx.YES:
                 self.subject.SetFocus()
-                return
+                return False
+        return True
+
+    def on_schedule(self, evt=None):
+        if self.busy or not self.ready_to_send():
+            return
+        when = cx.ask_schedule(self)
+        if when is None:
+            self.schedule_btn.SetFocus()
+            return
+        self.outgoing, self.when, self.result = self.fields(), when, "scheduled"
+        self.EndModal(wx.ID_OK)
+
+    def on_send(self, evt):
+        if self.busy or not self.ready_to_send():
+            return
+        if self.undo_seconds > 0:
+            # quem envia e a janela principal, depois do tempo de desfazer
+            self.outgoing, self.result = self.fields(), "queued"
+            self.EndModal(wx.ID_OK)
+            return
         self.set_busy(True)
         self.send_btn.SetLabel(i18n.tr("Enviando"))
         args, draft = self.fields(), self.draft

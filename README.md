@@ -1,10 +1,13 @@
 # AudioMail
 
-Cliente de Gmail para Windows feito para quem usa leitor de tela (NVDA, JAWS, Narrador). A interface usa controles nativos do Windows (wxPython), e o programa fala os avisos pelo leitor de tela.
+Cliente de e-mail para Windows (Gmail, Yahoo, iCloud, Zoho, UOL, BOL, Terra e outros) feito para quem usa leitor de tela (NVDA, JAWS, Narrador). A interface usa controles nativos do Windows (wxPython), e o programa fala os avisos pelo leitor de tela.
 
 ## O que ele faz
 
-- Lê, escreve, responde e organiza e-mails do Gmail (também Google Workspace), com várias contas.
+- Lê, escreve, responde e organiza e-mails do Gmail (também Google Workspace) e de outros provedores, com várias contas. Contas da Microsoft (Outlook, Hotmail) ainda não funcionam.
+- E-mails em HTML organizados para leitura, com a lista de links para abrir direto (Ctrl+Enter abre o link da linha).
+- Contatos aprendidos sozinhos, com sugestões ao digitar o endereço (Ctrl+K busca).
+- Desfazer envio, agendar envio, respostas prontas e cancelar inscrição de newsletters com um botão.
 - Avisa na hora quando chega mensagem nova e fica na bandeja do sistema.
 - Busca, conversas, pastas, rascunhos e atalhos de teclado para tudo.
 - Tradução de mensagens e do texto que você escreve.
@@ -16,7 +19,7 @@ Cliente de Gmail para Windows feito para quem usa leitor de tela (NVDA, JAWS, Na
 
 A versão mais recente está em [Releases](https://github.com/martimpcctrl/AudioMail/releases). Baixe o `AudioMail-Portatil-X.Y.Z.zip`, extraia e abra o `AudioMail.exe`.
 
-Para entrar, use o seu e-mail do Gmail e uma **senha de app** (crie em <https://myaccount.google.com/apppasswords>, com a verificação em duas etapas ativada). A senha fica criptografada pelo Windows, só neste computador.
+Para entrar com o Gmail, use o seu e-mail e uma **senha de app** (crie em <https://myaccount.google.com/apppasswords>, com a verificação em duas etapas ativada). A senha fica criptografada pelo Windows, só neste computador.
 
 ## Rodar pelo código
 

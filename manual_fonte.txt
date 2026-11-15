@@ -1,11 +1,14 @@
 # Manual do AudioMail {{versao}}
 
 ## O que é o AudioMail
-O AudioMail é um programa para ler e escrever e-mails do Gmail, feito para ser usado só com o teclado e com leitor de tela como o NVDA. Ele avisa na hora quando chega mensagem, fica na bandeja do Windows e se atualiza sozinho.
+O AudioMail é um programa para ler e escrever e-mails do Gmail e de outros provedores (Yahoo, iCloud, Zoho, UOL, BOL, Terra e outros), feito para ser usado só com o teclado e com leitor de tela como o NVDA. Ele avisa na hora quando chega mensagem, fica na bandeja do Windows e se atualiza sozinho.
 
 ## Primeiros passos
 - Abra o AudioMail.exe. Não precisa instalar nada.
-- Na primeira vez aparece a tela de entrada com os campos E-mail e Senha de app.
+- Na primeira vez aparece a tela de entrada com os campos Provedor, E-mail e Senha de app. O provedor é escolhido sozinho pelo seu e-mail; confira se está certo.
+- Outros provedores: Yahoo, iCloud e Zoho também pedem uma senha de app, criada no site deles (o botão "Criar senha de app" abre a página certa). UOL, BOL e Terra usam a senha do e-mail. Para outro provedor, escolha "Outro (escrever os servidores)" e preencha os servidores IMAP e SMTP que o seu provedor informa.
+- Contas da Microsoft (Outlook, Hotmail, Live) ainda não funcionam: a Microsoft só deixa entrar pelo site dela.
+- As instruções abaixo são para o Gmail.
 - A senha de app não é a senha normal do Gmail. É uma senha de 16 letras que o Google cria só para este programa.
 - Para criar: na tela de entrada, use o botão "Criar senha de app (abre o site do Google)". Ele abre https://myaccount.google.com/apppasswords no seu navegador.
 - Entre na sua conta Google, dê um nome como AudioMail, e o Google mostra a senha. Copie com Ctrl+C e cole no campo Senha de app. Pode colar com os espaços.
@@ -29,15 +32,51 @@ Ordem do Tab:
 - Delete apaga (pede confirmação e manda para a Lixeira).
 - Ctrl+Shift+L marca como lida e Ctrl+Shift+U marca como não lida.
 
+## Links e e-mails em HTML
+- E-mails de lojas, bancos e newsletters (em HTML) aparecem organizados: títulos e parágrafos separados, listas com marcador, e sem o texto escondido que esses e-mails costumam ter.
+- Cada link aparece no texto como [link 1], [link 2] e assim por diante.
+- Na leitura, Ctrl+Enter abre o link da linha onde está o cursor.
+- Também há a lista Links, depois do texto: cada item diz o texto do link e o site de destino. Enter abre no navegador. O botão Abrir link faz o mesmo.
+- Confira o site de destino antes de abrir: se o e-mail diz que é do seu banco e o link vai para outro site, desconfie.
+- Um link de e-mail (mailto) abre uma mensagem nova no próprio AudioMail.
+
+## Cancelar inscrição
+- Em e-mails de propaganda e newsletters aparece o botão Cancelar inscrição na leitura.
+- O AudioMail pergunta antes. Se o remetente aceita o cancelamento automático, o pedido é enviado na hora, sem abrir nada. Senão, ele manda o e-mail de cancelamento que o remetente pede, ou abre a página de cancelamento no navegador para você confirmar por lá.
+
 ## Escrever uma mensagem
 - Ctrl+N abre uma mensagem nova.
-- Ordem dos campos: Para, Cópia, Cópia oculta, Assunto, Texto da mensagem, Anexos e os botões Adicionar anexo, Remover anexo, Enviar, Salvar rascunho e Cancelar.
+- Ordem dos campos: Para, os botões Contatos e Mostrar cópia e cópia oculta, Assunto, Texto da mensagem, Anexos, os botões Adicionar anexo, Remover anexo e Respostas prontas, e no fim Enviar, Agendar envio, Salvar rascunho e Cancelar.
+- Cópia e Cópia oculta são opcionais e ficam escondidas. Ctrl+Shift+C (ou o botão) mostra e esconde os dois campos. O AudioMail lembra se você deixou aparecendo.
 - Para vários destinatários, separe os endereços com vírgula ou ponto e vírgula.
 - Ctrl+Enter envia de qualquer campo.
-- Anexos: o Gmail aceita cerca de 18 MB no total por mensagem.
+- Anexos: os provedores aceitam cerca de 18 MB no total por mensagem.
 - Ctrl+S salva como rascunho na pasta Rascunhos do Gmail. Se você cancelar uma mensagem alterada, o programa pergunta se quer salvar.
 - Para continuar um rascunho, abra a pasta Rascunhos e aperte Enter nele.
 - A assinatura automática se define em Configurações e entra sozinha nas mensagens novas e nas respostas.
+
+## Contatos
+- O AudioMail aprende sozinho os endereços com quem você troca e-mails: quem manda mensagens para você, quem aparece nas mensagens que você abre e, principalmente, para quem você escreve. Na primeira vez de cada conta ele também lê os destinatários das mensagens enviadas.
+- Ao digitar nos campos Para, Cópia e Cópia oculta, o Windows mostra sugestões: use as setas para cima e para baixo e Enter para escolher. Com vários endereços, só o último é completado.
+- Ctrl+K (ou o botão Contatos) abre a busca de contatos: digite parte do nome ou do e-mail, desça com a seta para a lista e aperte Enter para adicionar no campo onde você estava.
+- Os contatos ficam só neste computador, no arquivo contatos.json da pasta de dados.
+
+## Respostas prontas
+- Ctrl+Shift+P (ou o botão Respostas prontas) abre a lista dos textos que você guardou, como "Recebi, obrigado!".
+- Enter insere a resposta escolhida onde está o cursor no texto da mensagem.
+- Nova resposta, Editar e Apagar cuidam da lista. Se você tiver selecionado um trecho do texto antes, ele já vem preenchido na resposta nova.
+
+## Desfazer envio
+- Depois de Enviar, a mensagem espera alguns segundos antes de sair (10 segundos, se você não mudar). O AudioMail fala "Enviando em 10 segundos".
+- Nesse tempo, Ctrl+Shift+Z na janela principal (ou Mensagem, Desfazer envio) cancela o envio e abre a mensagem de novo para você corrigir.
+- O tempo se escolhe em Configurações, "Tempo para desfazer o envio". "Desligado" envia na hora.
+- Se você fechar o AudioMail nesse tempo, a mensagem sai na hora.
+
+## Agendar envio
+- Na escrita, o botão Agendar envio pergunta o dia e a hora em que a mensagem deve sair.
+- A mensagem sai no horário escolhido se o AudioMail estiver aberto (pode estar na bandeja). Se o programa estiver fechado, ela sai assim que você abrir.
+- Mensagem, Mensagens agendadas mostra a lista: Enviar agora, Editar (abre a mensagem e tira do agendamento) ou Cancelar agendamento (a mensagem vai para os rascunhos).
+- Se não der para enviar, por exemplo sem internet, o AudioMail avisa e tenta de novo a cada 5 minutos.
 
 ## Traduzir
 - Ctrl+T abre a mensagem já traduzindo. Ou abra a mensagem e aperte o botão Traduzir.
@@ -100,7 +139,8 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 - manter na bandeja ao fechar e ao minimizar;
 - abrir já escondido e iniciar com o Windows;
 - verificar atualizações automaticamente;
-- o som de notificação e a assinatura.
+- o som de notificação e a assinatura;
+- o tempo para desfazer o envio.
 
 ## Atualizações
 - O programa confere sozinho se há versão nova, ao abrir e a cada 6 horas. Para conferir na hora: Ajuda, Verificar atualizações.
@@ -130,11 +170,13 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 - Ctrl+G: agrupar por conversa.
 - Ctrl+Shift+L: marcar como lida.
 - Ctrl+Shift+U: marcar como não lida.
+- Ctrl+Shift+Z: desfazer o envio.
 - Ctrl+M: esconder na bandeja.
 - Ctrl+P: preferências.
 - F1: abrir este manual.
 - Ctrl+Q: sair de verdade.
-- Na escrita: Ctrl+Enter envia e Ctrl+S salva o rascunho.
+- Na escrita: Ctrl+Enter envia, Ctrl+S salva o rascunho, Ctrl+K abre os contatos, Ctrl+Shift+C mostra ou esconde Cópia e Cópia oculta, Ctrl+Shift+P abre as respostas prontas.
+- Na leitura: Ctrl+Enter abre o link da linha.
 
 ## Problemas comuns
 - Não consegui entrar: confira se é a senha de app e não a senha normal, e se a verificação em duas etapas está ligada. Se mudou a senha do Google, as senhas de app antigas deixam de valer: crie outra.

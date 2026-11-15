@@ -44,6 +44,9 @@ DEFAULTS = {
     "ai_api_keys_enc": {},
     "ai_summary_consent": {},
     "support_tickets": [],
+    "undo_send_seconds": 10,  # segundos para desfazer o envio (0 desliga)
+    "compose_show_cc": False, # mostrar Copia e Copia oculta ao escrever
+    "quick_replies": [],      # respostas prontas [{"title", "text"}]
 }
 
 

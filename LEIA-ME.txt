@@ -1,4 +1,4 @@
-AudioMail - cliente de Gmail acessível
+AudioMail - cliente de e-mail acessível (Gmail e outros provedores)
 
 INSTALAR E ABRIR (PowerShell, dentro da pasta)
   pip install -r requirements.txt
@@ -32,7 +32,11 @@ LANÇAR UMA VERSÃO PELO PAINEL DO SITE (até a 1.0.9; da 1.0.10 em diante, veja
   Quem roda o programa pelo Python (não é o seu caso) só recebe atualização se você também enviar
   o zip do código (python empacotar.py, sem --so-versao).
 
-CONTA (somente Gmail)
+CONTA
+  Provedores: Gmail, Yahoo, iCloud, Zoho, UOL, BOL, Terra ou "Outro" (servidores escritos à mão).
+  Contas da Microsoft (Outlook, Hotmail, Live) não funcionam: a Microsoft só aceita entrar pelo
+  site dela (OAuth). Os provedores ficam em providers.py.
+  Gmail:
   1. Ative a verificação em duas etapas na conta Google.
   2. Crie uma senha de app em myaccount.google.com/apppasswords.
   3. Na tela de entrada, use o e-mail e essa senha de app (não a senha normal).
@@ -128,6 +132,7 @@ TESTES (opcional)
   python test_search_wire.py
   python test_updater.py
   python test_github_update.py
+  python test_novidades.py
   python test_empacotar.py
   python test_translator.py
   python test_manual.py

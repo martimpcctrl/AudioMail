@@ -16,6 +16,7 @@ from email.utils import (formataddr, formatdate, getaddresses, make_msgid,
 from html.parser import HTMLParser
 
 import i18n
+import message_text as mt
 
 _OUTLOOK = ("outlook.office365.com", 993, "smtp-mail.outlook.com", 587, "starttls")
 _YAHOO = ("imap.mail.yahoo.com", 993, "smtp.mail.yahoo.com", 465, "ssl")
@@ -142,6 +143,7 @@ class _HTMLText(HTMLParser):
 
 
 def html_to_text(html):
+    """Texto simples (antigo); a leitura usa message_text.html_to_readable."""
     p = _HTMLText()
     p.feed(html)
     text = "".join(p.parts)
@@ -190,6 +192,7 @@ def parse_header_fetch(data):
         out.append({
             "uid": uid.group(1),
             "from": short_sender(sender),
+            "from_raw": sender,
             "subject": _h(hdr, "Subject") or "(sem assunto)",
             "date": fmt_date(_h(hdr, "Date")),
             "unread": "\\seen" not in flagset,
@@ -201,8 +204,10 @@ def parse_header_fetch(data):
 
 def parse_full_message(raw_bytes, uid):
     msg = message_from_bytes(raw_bytes, policy=policy.default)
-    body = ""
-    part = msg.get_body(preferencelist=("plain", "html"))
+    body, links = "", []
+    # O HTML vira texto organizado, com os links numerados; o texto puro das
+    # newsletters costuma ser uma sopa de endereços compridos.
+    part = msg.get_body(preferencelist=("html", "plain"))
     if part is not None:
         try:
             body = part.get_content()
@@ -210,7 +215,9 @@ def parse_full_message(raw_bytes, uid):
             payload = part.get_payload(decode=True) or b""
             body = payload.decode("utf-8", "replace")
         if part.get_content_type() == "text/html":
-            body = html_to_text(body)
+            body, links = mt.html_to_readable(body)
+        else:
+            links = mt.links_in_text(body)
     attachments = []
     try:
         for i, p in enumerate(msg.iter_attachments(), 1):
@@ -233,6 +240,9 @@ def parse_full_message(raw_bytes, uid):
         "message_id": _h(msg, "Message-ID"),
         "references": _h(msg, "References"),
         "body": body.replace("\r\n", "\n").strip(),
+        "links": links,
+        "list_unsubscribe": _h(msg, "List-Unsubscribe"),
+        "list_unsubscribe_post": _h(msg, "List-Unsubscribe-Post"),
         "attachments": attachments,
     }
 
@@ -381,7 +391,7 @@ def build_message(sender, to, cc, bcc, subject, body, in_reply_to=None,
         try:
             total += os.path.getsize(path)
             if total > MAX_ATTACH:
-                raise MailError("Os anexos passam do limite do Gmail (cerca de 18 MB no total).")
+                raise MailError("Os anexos passam do limite de envio (cerca de 18 MB no total).")
             ctype, enc = mimetypes.guess_type(path)
             if not ctype or enc:
                 ctype = "application/octet-stream"
@@ -441,6 +451,7 @@ class MailClient:
         self.imap = None
         self.selected = None
         self.folders = []
+        self.gmail = "gmail" in imap_host.lower()   # conversas (X-GM-THRID) so no Gmail
         self.lock = threading.RLock()
 
     # conexao
@@ -454,9 +465,11 @@ class MailClient:
                     self.imap = imaplib.IMAP4_SSL(self.imap_host, self.imap_port,
                                                   ssl_context=ssl.create_default_context())
                 self.imap.login(self.email, self.password)
+                caps = [c.upper() for c in (self.imap.capabilities or ())]
+                self.gmail = "X-GM-EXT-1" in caps
             except imaplib.IMAP4.error as e:
-                raise MailError("Não foi possível entrar. Confira o e-mail e a senha "
-                                "(em Gmail e Outlook use senha de app). Detalhe: %s" % e)
+                raise MailError("Não foi possível entrar. Confira o e-mail e a senha de app. "
+                                "Detalhe: %s" % e)
             except OSError as e:
                 raise MailError("Não foi possível conectar ao servidor %s. Detalhe: %s"
                                 % (self.imap_host, e))
@@ -538,12 +551,36 @@ class MailClient:
         if not uids:
             return []
         ids = b",".join(uids).decode()
+        thread = "X-GM-THRID " if self.gmail else ""
         typ, data = self.imap.uid(
             "FETCH", ids,
-            "(FLAGS X-GM-THRID BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])")
+            "(FLAGS %sBODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])" % thread)
         if typ != "OK":
             raise MailError("Falha ao ler os cabeçalhos.")
         return parse_header_fetch(data)
+
+    def recent_recipients(self, limit=300):
+        """Cabeçalhos Para e Cópia das últimas mensagens enviadas (para os contatos)."""
+        sent = self._find_special("\\sent", {"sent", "enviados", "sent items", "itens enviados",
+                                               "sent mail", "e-mails enviados"})
+        if not sent:
+            return []
+        with self.lock:
+            self._ensure()
+            self._select(sent)
+            typ, data = self.imap.uid("SEARCH", None, "ALL")
+            if typ != "OK" or not data or not data[0]:
+                return []
+            ids = b",".join(data[0].split()[-limit:]).decode()
+            typ, data = self.imap.uid("FETCH", ids, "(BODY.PEEK[HEADER.FIELDS (TO CC)])")
+            if typ != "OK":
+                return []
+        values = []
+        for item in data:
+            if isinstance(item, tuple):
+                hdr = message_from_bytes(item[1], policy=policy.default)
+                values.extend(v for v in (_h(hdr, "To"), _h(hdr, "Cc")) if v)
+        return values
 
     def fetch_message(self, folder_raw, uid):
         with self.lock:
