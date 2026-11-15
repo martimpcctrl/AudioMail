@@ -279,15 +279,18 @@ class ViewsMixin:
         self.run(work, done, "Mudando os marcadores")
 
     # ---------- busca avançada ----------
-    def open_advanced_search(self):
+    def open_advanced_search(self, all_folders=False):
         if not self.active:
             return
-        dlg = vd.AdvancedSearchDialog(self, self.search_box.GetValue())
+        dlg = vd.AdvancedSearchDialog(self, self.search_box.GetValue(), all_folders)
         ok = dlg.ShowModal() == wx.ID_OK
-        query = dlg.query
+        query, everywhere = dlg.query, dlg.all_folders
         dlg.Destroy()
         if not ok:
             self.list.SetFocus()
+            return
+        if everywhere:
+            self.search_all(query)
             return
         self.search_box.SetValue(query)
         self.do_search()

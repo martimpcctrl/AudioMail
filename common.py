@@ -45,6 +45,9 @@ DEFAULTS = {
     "ai_summary_consent": {},
     "support_tickets": [],
     "show_preview": True,       # começo do texto na lista de mensagens
+    "offline_enabled": True,     # guardar mensagens no computador (mensagens.db)
+    "offline_attachments": False, # guardar também os anexos das mensagens abertas
+    "offline_days": 90,          # guardar só as dos últimos N dias (0 = sem limite)
     "undo_send_seconds": 10,  # segundos para desfazer o envio (0 desliga)
     "compose_show_cc": False, # mostrar Copia e Copia oculta ao escrever
     "quick_replies": [],      # respostas prontas [{"title", "text"}]

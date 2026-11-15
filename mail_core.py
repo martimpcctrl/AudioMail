@@ -16,6 +16,7 @@ from email.utils import (formataddr, formatdate, getaddresses, make_msgid,
 from html.parser import HTMLParser
 
 import i18n
+import invites
 import message_text as mt
 import search_query as sq
 from contacts import parse_addresses
@@ -37,8 +38,25 @@ PRESETS = {
 }
 
 
+def message_time(date_header):
+    """Data do cabeçalho Date em segundos (0 se não der para ler)."""
+    try:
+        return parsedate_to_datetime(date_header).timestamp()
+    except Exception:
+        return 0.0
+
+
+def is_offline_error(err):
+    """Falta de conexão (sem internet, servidor fora do ar), e não senha errada ou recusa."""
+    return isinstance(err, (ConnectionFailed, OSError, imaplib.IMAP4.abort, EOFError))
+
+
 class MailError(Exception):
     pass
+
+
+class ConnectionFailed(MailError):
+    """O servidor não respondeu (sem internet ou fora do ar)."""
 
 
 # ---------- utilidades puras (testaveis sem rede) ----------
@@ -214,6 +232,7 @@ def parse_header_fetch(data):
         sender = _h(hdr, "From")
         out.append({
             "uid": uid.group(1),
+            "ts": message_time(_h(hdr, "Date")),
             "from": short_sender(sender),
             "from_raw": sender,
             "to_raw": _h(hdr, "To"),
@@ -400,7 +419,16 @@ def parse_full_message(raw_bytes, uid):
         "list_unsubscribe": _h(msg, "List-Unsubscribe"),
         "list_unsubscribe_post": _h(msg, "List-Unsubscribe-Post"),
         "attachments": attachments,
+        "ts": message_time(_h(msg, "Date")),
+        "invite": _invite_of(msg),
     }
+
+
+def _invite_of(msg):
+    try:
+        return invites.parse_ics(invites.find_invite(msg))
+    except Exception:
+        return None
 
 
 def build_forward(orig):
@@ -659,8 +687,8 @@ class MailClient:
                 raise MailError("Não foi possível entrar. Confira o e-mail e a senha de app. "
                                 "Detalhe: %s" % e)
             except OSError as e:
-                raise MailError("Não foi possível conectar ao servidor %s. Detalhe: %s"
-                                % (self.imap_host, e))
+                raise ConnectionFailed("Não foi possível conectar ao servidor %s. Detalhe: %s"
+                                       % (self.imap_host, e))
             self.selected = None
 
     def close(self):
@@ -890,7 +918,8 @@ class MailClient:
                 values.extend(v for v in (_h(hdr, "To"), _h(hdr, "Cc")) if v)
         return values
 
-    def fetch_message(self, folder_raw, uid):
+    def fetch_raw(self, folder_raw, uid):
+        """A mensagem inteira como veio do servidor (bytes)."""
         with self.lock:
             self._ensure()
             self._select(folder_raw)
@@ -899,8 +928,28 @@ class MailClient:
                 raise MailError("Falha ao abrir a mensagem.")
         for item in data:
             if isinstance(item, tuple):
-                return parse_full_message(item[1], uid)
+                return item[1]
         raise MailError("Mensagem não encontrada.")
+
+    def fetch_message(self, folder_raw, uid):
+        return parse_full_message(self.fetch_raw(folder_raw, uid), uid)
+
+    def count_matches(self, folders, query, stop=None):
+        """[(pasta, quantas mensagens)] da mesma busca em cada pasta, só as que têm resultado.
+        ``stop()`` verdadeiro interrompe no meio (a janela foi fechada)."""
+        out = []
+        for f in folders:
+            if stop and stop():
+                break
+            if f.get("filter") or "\\all" in f.get("flags", ()):
+                continue   # pastas de mentira e o Todos os e-mails do Gmail repetiriam tudo
+            try:
+                _, total = self.search_query(f["raw"], query, limit=100)
+            except MailError:
+                continue
+            if total:
+                out.append((f, total))
+        return out
 
     def set_seen(self, folder_raw, uid, seen=True):
         with self.lock:
@@ -1015,6 +1064,17 @@ class MailClient:
              attachments=None):
         msg, recipients = build_message(self.email, to, cc, bcc, subject, body,
                                         in_reply_to, references, attachments)
+        self._deliver(msg, recipients)
+        self._save_sent_copy(msg)
+
+    def send_calendar_reply(self, to, subject, body, ics):
+        """Responde a um convite: texto comum e, junto, a resposta que o calendário
+        do organizador lê sozinho (text/calendar; method=REPLY)."""
+        msg, recipients = build_message(self.email, to, "", "", subject, body)
+        msg.add_alternative(ics, subtype="calendar", params={"method": "REPLY"})
+        self._deliver(msg, recipients)
+
+    def _deliver(self, msg, recipients):
         ctx = ssl.create_default_context()
         try:
             if self.smtp_security == "ssl":
@@ -1030,7 +1090,6 @@ class MailClient:
             raise MailError("O servidor recusou a senha ao enviar.")
         except (smtplib.SMTPException, OSError) as e:
             raise MailError("Falha ao enviar: %s" % e)
-        self._save_sent_copy(msg)
 
     def _save_sent_copy(self, msg):
         # O Gmail guarda sozinho a cópia dos enviados; nos outros servidores guardamos aqui.

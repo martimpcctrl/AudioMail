@@ -28,6 +28,10 @@ import organize
 import views
 import inbox_extras
 import bulletin
+import offline
+import meetings
+import search_all
+import contacts_dialogs
 from contacts import Contacts
 from common import data_dir
 from common import (DEFAULTS, config_path, default_sound_path, find_account, forget_password,
@@ -70,6 +74,8 @@ class Account:
         self.snippets = {}           # (pasta, uid) -> começo do texto
         self.loading_snippets = False
         self.loading_more = False
+        self.offline = False         # sem conexão: mostrando o que está guardado no computador
+        self.pending_login = None    # entrada que ficou para quando a internet voltar
 
 
 def _active(name, default):
@@ -220,7 +226,8 @@ class TrayIcon(wx.adv.TaskBarIcon):
         return menu
 
 
-class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
+class MainFrame(offline.OfflineMixin, meetings.MeetingMixin, search_all.SearchAllMixin,
+                inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
     def SetStatusText(self, text, number=0):
         return super().SetStatusText(i18n.tr(text), number)
 
@@ -312,6 +319,7 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
         self.apply_update_timer()
         self.reminder_timer.Start(15000)
         wx.CallAfter(self.start)
+        wx.CallLater(20000, self.prune_store_later)
         if not self.cfg.get("reminders_intro_shown", False):
             self.cfg["reminders_intro_shown"] = True
             save_config(self.cfg)
@@ -391,6 +399,7 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
         self.add(m, "Atualizar\tF5", lambda e: self.refresh())
         self.add(m, "Buscar\tCtrl+F", lambda e: self.search_box.SetFocus())
         self.add(m, "Busca avançada...\tCtrl+Shift+S", lambda e: self.open_advanced_search())
+        self.add(m, "Buscar em todas as pastas...\tCtrl+Shift+T", lambda e: self.open_search_all())
         self.add(m, "Carregar mais mensagens\tCtrl+Shift+M", lambda e: self.load_more())
         self.add(m, "Boletim da caixa\tCtrl+I", lambda e: self.speak_bulletin())
         self.add(m, "Ir para as pastas\tF6", lambda e: self.choice.SetFocus())
@@ -438,6 +447,8 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
         self.add(m, "Escolher som de notificação", lambda e: self.choose_sound())
         self.add(m, "Testar som", lambda e: self.test_sound())
         self.add(m, "Calendário", lambda e: self.open_reminders())
+        self.add(m, "Contatos e grupos...", lambda e: self.open_contacts())
+        self.add(m, "Mensagens guardadas no computador...", lambda e: self.open_offline_settings())
         self.add(m, "Regras\tCtrl+Shift+G", lambda e: self.open_rules())
         self.add(m, "Remetentes bloqueados", lambda e: self.open_blocked())
         self.add(m, "Assinatura desta conta...", lambda e: self.edit_account_signature())
@@ -535,6 +546,10 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
         self.reminder_timer.Stop()
         self.flush_pending_sends()
         self.flush_pending_moves()
+        if getattr(self, "offline_timer", None) is not None:
+            self.offline_timer.Stop()
+        if getattr(self, "_store", None) is not None:
+            self._store.close()
         for acc in self.accounts:
             self.stop_watcher(acc)
             if acc.client:
@@ -662,6 +677,7 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
         def work():
             try:
                 msgs, err = client.fetch_headers("INBOX", limit=limit), None
+                self.cache_inbox(acc.email, msgs)
             except Exception as e:
                 msgs, err = None, e
             wx.CallAfter(self.after_check, acc, msgs, err)
@@ -694,6 +710,8 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
                 self.toast("AudioMail", "Não foi possível verificar agora." + suffix)
                 self.announce("Não foi possível verificar agora." + suffix)
             return
+        if acc.offline and not acc.pending_login:
+            self.set_offline(acc, False)
         new = mc.find_new(msgs, acc.baseline) if acc.baseline is not None else []
         if acc.baseline is None:
             # a caixa de entrada inteira so na primeira vez de cada conta; depois, so as novas
@@ -1001,7 +1019,15 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
         elif not self.accounts:
             self.quit()
 
-    def connect(self, v, activate=False):
+    def account_for(self, email):
+        """A conta já aberta com este e-mail, ou uma nova na lista."""
+        acc = next((a for a in self.accounts if a.email.lower() == email.lower()), None)
+        if acc is None:
+            acc = Account(email)
+            self.accounts.append(acc)
+        return acc
+
+    def connect(self, v, activate=False, quiet=False):
         server = providers.server_for({"provider": v.get("provider") or "gmail",
                                        "server": v.get("server")})
         client = mc.MailClient(v["email"], v["password"], server["imap_host"], server["imap_port"],
@@ -1012,10 +1038,9 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
             return client.list_folders()
 
         def done(folders):
-            acc = next((a for a in self.accounts if a.email.lower() == v["email"].lower()), None)
-            if acc is None:
-                acc = Account(v["email"])
-                self.accounts.append(acc)
+            acc = self.account_for(v["email"])
+            was_offline, acc.pending_login = acc.offline, None
+            self.cache_folders(acc, folders, client.gmail)
             self.stop_watcher(acc)
             if acc.client:
                 acc.client.close()
@@ -1046,8 +1071,14 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
             self.apply_timer()
             self.import_sent_contacts(acc)
             wx.CallLater(3000, self.send_due_scheduled)
+            if was_offline:
+                self.set_offline(acc, False)
 
         def fail(err):
+            if quiet:
+                return   # nova tentativa sem conexão: continua mostrando o que está guardado
+            if self.start_offline(v, client, err):
+                return
             self.Show()
             i18n.message_box("Conta %s\n\n%s" % (v["email"], err), "Não foi possível entrar",
                           wx.OK | wx.ICON_ERROR, self)
@@ -1055,6 +1086,13 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
                 self.ask_login(email=v["email"])
 
         self.run(work, done, "Conectando " + v["email"], fail)
+
+    def open_contacts(self):
+        dlg = contacts_dialogs.ContactsDialog(self, self.contacts, self.announce)
+        dlg.ShowModal()
+        dlg.Destroy()
+        self.contacts.save()
+        self.list.SetFocus()
 
     def update_account_ui(self):
         many = len(self.accounts) > 1
@@ -1095,6 +1133,11 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
         if entry:
             forget_password(entry)
             self.cfg["accounts"].remove(entry)
+        if self.store is not None:
+            try:
+                self.store.forget_account(acc.email)   # o que estava guardado dela sai também
+            except Exception:
+                pass
         save_config(self.cfg)
         self.accounts.remove(acc)
         self.active = None
@@ -1167,30 +1210,43 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
             return
         evt.Skip()
 
-    def refresh(self, after=None, failed=None):
+    def refresh(self, after=None, failed=None, quiet=False):
         acc = self.active
         if not acc or not acc.client:
             return
         raw, query, client, view_filter = acc.current_raw, acc.search, acc.client, acc.view_filter
         limit = acc.limit
+        keep = after is not None or quiet
+        if not keep and not query:
+            # o que está guardado aparece na hora; a resposta do servidor só atualiza
+            cached = self.cached_list(acc, raw, view_filter)[:limit]
+            if cached:
+                acc.total = len(cached)
+                # o guardado não conta como "já visto": senão as mensagens que chegaram
+                # com o programa fechado virariam avisos de mensagem nova
+                baseline = acc.baseline
+                self.show_messages(cached)
+                acc.baseline = baseline
+                keep = True
 
         def work():
-            if query or view_filter:
-                return client.search_query(raw, query, limit, view_filter)
-            return client.fetch_headers(raw, limit=limit, with_total=True)
+            return self.fetch_list(acc.email, client, raw, query, view_filter, limit)
 
         def done(result):
             if acc is not self.active or raw != acc.current_raw or query != acc.search \
                     or view_filter != acc.view_filter:
                 return
-            msgs, acc.total = result
-            self.show_messages(msgs, keep=after is not None)
+            msgs, acc.total, offline_now = result
+            self.show_messages(msgs, keep=keep)
+            self.set_offline(acc, offline_now)
             if after:
                 after()
 
         def error(err):
             if failed:
                 failed()
+            if quiet:
+                return
             i18n.message_box(str(err), "Erro", wx.OK | wx.ICON_ERROR, self)
 
         self.run(work, done, "Buscando" if query else "Carregando mensagens", error)
@@ -1292,25 +1348,31 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
         oldest_first = sorted(uids, key=int)
 
         def work():
-            return [client.fetch_message(raw, u) for u in oldest_first]
+            return [self.fetch_full(acc.email, client, raw, u) for u in oldest_first]
 
         def done(fulls):
             if acc is self.active:
                 self.set_unread(uids, False)
             newest = fulls[-1]
+            if any(f.get("offline") for f in fulls):
+                self.announce("Sem conexão: abrindo a cópia guardada no computador.")
             attachments = [a for f in fulls for a in f["attachments"]]
             bodies, links = mt.merge_links([(f["body"], f.get("links", [])) for f in fulls])
             sections = [(mc.message_header(f), body) for f, body in zip(fulls, bodies)]
             self.contacts_from_message(newest)
             prefix = "" if len(fulls) == 1 else "Conversa com %d mensagens, assunto %s" % (
                 len(fulls), mc.normalize_subject(newest["subject"]) or newest["subject"])
+            invite_line = self.invite_line(newest)
+            if invite_line:
+                prefix = invite_line + ("\n" + prefix if prefix else "")
             text = mc.render_text(prefix, sections)
             self.SetStatusText("Mensagem aberta")
             dlg = ReadDialog(self, newest["subject"], text, attachments, self.announce,
                              sections=sections, prefix=prefix, translation=self.translation,
                              auto_translate=auto_translate, ai_summary=self.ai_summary,
                              links=links, unsubscribe=self.unsubscribe_action(acc, newest),
-                             organize=True, flagged=bool(row.get("flagged")))
+                             organize=True, flagged=bool(row.get("flagged")),
+                             invite_answer=self.can_answer_invite(acc, newest))
             dlg.ShowModal()
             result, mailto = dlg.result, dlg.link_to_open
             dlg.Destroy()
@@ -1325,6 +1387,8 @@ class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.Organi
                 self.delete_selected(rows=[row])
             elif result == "star":
                 self.toggle_star_selected(rows=[row])
+            elif result and result.startswith("invite_"):
+                self.answer_invite(acc, newest, result[len("invite_"):])
             elif result:
                 self.reply_to(newest, result == "replyall")
             self.list.SetFocus()

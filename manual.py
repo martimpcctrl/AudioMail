@@ -155,6 +155,15 @@ Tab moves through Account (when you have more than one), Folder, Search, and Mes
 - New message notifications have Reply, Archive and Mark as read buttons (in the Windows notification center, Windows+N). The tray menu has the same actions for the latest new message. For this, AudioMail creates an AudioMail shortcut in the Start menu.
 - Tools, Signature for this account sets a signature for the open account only.
 
+## Meetings, contacts, printing and offline reading
+- Meeting invitations start with a sentence such as "Invitation: Team meeting, Friday, 11/20/2026, 14:00 to 15:00, location: room 2, from: Carlos". Accept invitation, Maybe and Decline invitation send the reply to the organizer, whose calendar records it. Accepting or answering Maybe also adds the meeting to the AudioMail Calendar.
+- In the reading window, Print (Ctrl+P) opens the standard Windows print dialog.
+- In the compose window, copy files in File Explorer (Ctrl+C) and press Ctrl+V in any field to attach them. Copied text is pasted as usual. Delete in the Attachments list removes the selected attachment.
+- Tools, Contacts and groups lets you create, edit and delete contacts (Enter edits, Delete deletes) and build groups such as "Family" (Space checks or unchecks each person). In the compose window, Ctrl+K lists groups first; choosing one adds every address at once.
+- File, Search all folders (Ctrl+Shift+T), or the Search all folders box in Advanced search, runs the search in every folder and lists how many results each one has. Enter opens that folder with the search applied. It needs internet.
+- AudioMail saves the message list of each folder and the text of the messages you open on this computer, so the list appears instantly. Without internet it says so, shows what is saved, and tries again every minute; you can read the messages you opened before and search them. If the computer starts without internet, the account opens with what is saved and signs in when the connection returns.
+- Tools, Messages saved on this computer turns this on or off, can also save attachments, chooses how many days to keep (30, 90, 180, 365 or no limit), shows the space used and deletes everything. The mensagens.db file is encrypted by Windows and is never sent anywhere; removing an account also deletes what was saved for it.
+
 ## Rules and blocked senders
 - Tools, Rules (Ctrl+Shift+G). A rule checks each new Inbox message: when the Sender, Subject or Recipient contains the text, it can move it to a folder, mark it as read, star it, delete it or play its own sound.
 - Rules run in list order (Move up, Move down). Message, Create rule from this message fills in the sender for you. Apply to the inbox now runs the rules on messages already there.
@@ -248,6 +257,15 @@ Tab recorre Cuenta (si tienes más de una), Carpeta, Buscar y Mensajes. Carpeta 
 - Archivo, Resumen de la bandeja (Ctrl+I), también en el menú de la bandeja, dice cuántos no leídos tiene cada cuenta y de quién son, además de las pestañas de Gmail, los recordatorios de hoy y los mensajes programados para hoy.
 - Los avisos de mensaje nuevo tienen los botones Responder, Archivar y Marcar como leído (en el centro de notificaciones de Windows, Windows+N). El menú de la bandeja tiene las mismas acciones para el último mensaje nuevo. Para esto, AudioMail crea un acceso directo AudioMail en el menú Inicio.
 - Herramientas, Firma de esta cuenta define una firma solo para la cuenta abierta.
+
+## Reuniones, contactos, imprimir y leer sin internet
+- Las invitaciones a reuniones empiezan con una frase como "Invitación: Reunión de equipo, viernes, 20/11/2026, 14:00 a 15:00, lugar: sala 2, de: Carlos". Aceptar invitación, Quizás y Rechazar invitación envían la respuesta al organizador, y su calendario la registra. Al aceptar o responder Quizás, la reunión también entra en el Calendario de AudioMail.
+- En la lectura, Imprimir (Ctrl+P) abre la ventana de impresión normal de Windows.
+- En la escritura, copie archivos en el Explorador de archivos (Ctrl+C) y pulse Ctrl+V en cualquier campo para adjuntarlos. El texto copiado se pega como siempre. Suprimir en la lista Adjuntos quita el adjunto elegido.
+- Herramientas, Contactos y grupos permite crear, editar y eliminar contactos (Intro edita, Suprimir elimina) y armar grupos como "Familia" (Espacio marca o desmarca a cada persona). En la escritura, Ctrl+K muestra primero los grupos; al elegir uno se agregan todas las direcciones de una vez.
+- Archivo, Buscar en todas las carpetas (Ctrl+Shift+T), o la casilla Buscar en todas las carpetas de la Búsqueda avanzada, hace la búsqueda en cada carpeta y muestra cuántos resultados tiene cada una. Intro abre esa carpeta con la búsqueda hecha. Necesita internet.
+- AudioMail guarda en este equipo la lista de mensajes de cada carpeta y el texto de los mensajes que abre, así la lista aparece al instante. Sin internet lo avisa, muestra lo guardado y vuelve a intentar cada minuto; puede leer los mensajes que ya abrió y buscar en ellos. Si el equipo arranca sin internet, la cuenta se abre con lo guardado y entra sola cuando vuelve la conexión.
+- Herramientas, Mensajes guardados en el equipo activa o desactiva esto, puede guardar también los adjuntos, elige cuántos días guardar (30, 90, 180, 365 o sin límite), muestra el espacio usado y lo elimina todo. El archivo mensagens.db está cifrado por Windows y nunca se envía a ningún lugar; al quitar una cuenta también se elimina lo guardado de ella.
 
 ## Reglas y remitentes bloqueados
 - Herramientas, Reglas (Ctrl+Shift+G). Una regla revisa cada mensaje nuevo de la bandeja de entrada: si el Remitente, el Asunto o el Destinatario contiene el texto, puede moverlo a una carpeta, marcarlo como leído, destacarlo, eliminarlo o reproducir un sonido propio.

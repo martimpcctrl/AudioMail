@@ -41,6 +41,7 @@ Ordem do Tab:
 - Os botões da leitura são: Responder, Responder a todos, Encaminhar, Pôr estrela, Arquivar, Apagar e Fechar. Esc também fecha.
 - Na leitura valem os mesmos atalhos da lista: Ctrl+R, Ctrl+Shift+R, Ctrl+Shift+F, Ctrl+S, Ctrl+E e Delete.
 - Quando a mensagem tem anexos aparece a lista Anexos, com os botões Ler anexo, Abrir anexo, Salvar anexo e Salvar todos os anexos.
+- Imprimir (Ctrl+P) abre a janela normal de impressão do Windows, onde você escolhe a impressora. Saem no papel o cabeçalho (de, para, data, assunto) e o texto.
 
 ## Ler anexos e descrever imagens
 - Na leitura, escolha o anexo na lista Anexos e use Ler anexo (Ctrl+L). O texto abre numa janela para ler com as setas, sem abrir outro programa. O botão Copiar tudo copia o texto.
@@ -51,6 +52,12 @@ Ordem do Tab:
 - Ctrl+Shift+F encaminha a mensagem, com os anexos, para outra pessoa.
 - Delete apaga (vai para a Lixeira). Ctrl+Z desfaz.
 - Ctrl+Shift+L marca como lida e Ctrl+Shift+U marca como não lida.
+
+## Convites de reunião
+- Quando chega um convite (do Google Agenda, do Outlook ou de outro calendário), a leitura começa com uma frase como: "Convite: Reunião de equipe, sexta-feira, 20/11/2026, 14:00 às 15:00, local: sala 2, de: Carlos".
+- Os botões Aceitar convite, Talvez e Recusar convite mandam a resposta ao organizador, e o calendário dele registra sozinho.
+- Aceitando ou respondendo Talvez, a reunião entra no Calendário do AudioMail como lembrete, para ele avisar na hora.
+- Cancelamentos aparecem como "Reunião cancelada", sem os botões.
 
 ## Organizar: arquivar, mover, spam e estrela
 - Ctrl+E arquiva: a mensagem sai da caixa de entrada mas continua guardada (no Gmail, em Todos os e-mails; nos outros, na pasta Arquivo).
@@ -93,6 +100,7 @@ Ordem do Tab:
 - Ctrl+Enter envia de qualquer campo.
 - Se o texto fala de anexo ("segue em anexo", "anexei") e não tem nenhum arquivo, o AudioMail pergunta antes de enviar. Respondendo Não, ele já abre a escolha do arquivo.
 - Anexos: os provedores aceitam cerca de 18 MB no total por mensagem.
+- Colar arquivos: copie um ou mais arquivos no Explorador do Windows (Ctrl+C) e aperte Ctrl+V em qualquer campo da escrita. Eles entram como anexo e o AudioMail fala quantos são e o tamanho. Se o que foi copiado é texto, o Ctrl+V cola o texto normalmente. Na lista Anexos, Delete tira o anexo escolhido.
 - Ctrl+S salva como rascunho na pasta Rascunhos do Gmail. Se você cancelar uma mensagem alterada, o programa pergunta se quer salvar.
 - Para continuar um rascunho, abra a pasta Rascunhos e aperte Enter nele.
 - A assinatura automática se define em Configurações e entra sozinha nas mensagens novas e nas respostas.
@@ -109,6 +117,9 @@ Ordem do Tab:
 - O AudioMail aprende sozinho os endereços com quem você troca e-mails: quem manda mensagens para você, quem aparece nas mensagens que você abre e, principalmente, para quem você escreve. Na primeira vez de cada conta ele também lê os destinatários das mensagens enviadas.
 - Ao digitar nos campos Para, Cópia e Cópia oculta, o Windows mostra sugestões: use as setas para cima e para baixo e Enter para escolher. Com vários endereços, só o último é completado.
 - Ctrl+K (ou o botão Contatos) abre a busca de contatos: digite parte do nome ou do e-mail, desça com a seta para a lista e aperte Enter para adicionar no campo onde você estava.
+- Ferramentas, Contatos e grupos: a lista de contatos com os botões Novo contato, Editar contato e Apagar contato (Enter edita e Delete apaga). Os contatos criados à mão nunca saem da lista.
+- Na mesma janela ficam os grupos, como "Família" ou "Trabalho". Novo grupo pede o nome e mostra os contatos: Espaço marca ou desmarca cada pessoa.
+- Na escrita, o Ctrl+K mostra os grupos antes dos contatos ("Grupo Família, 4 pessoas"). Escolhendo um grupo, todos os endereços entram de uma vez no campo.
 - Os contatos ficam só neste computador, no arquivo contatos.json da pasta de dados.
 
 ## Respostas prontas
@@ -158,6 +169,20 @@ Ordem do Tab:
 - No campo Buscar dá para escrever como no Gmail: from:ana, subject:boleto, has:attachment, is:unread, is:starred, newer_than:7d, older_than:1y, after:2026/01/31, before:2026/12/31. Também valem em português: de:, para:, assunto:, tem:anexo, é:não-lida, é:estrela, depois:, antes:.
 - Arquivo, Busca avançada (Ctrl+Shift+S) abre uma janela com os campos De, Para, Assunto, Contém as palavras, Data, Só com anexo, Só não lidas e Só com estrela. O botão Buscar escreve a busca no campo e mostra o resultado.
 - Esc no campo Buscar limpa a busca.
+
+## Buscar em todas as pastas
+- Arquivo, Buscar em todas as pastas (Ctrl+Shift+T), ou a caixa Buscar em todas as pastas da Busca avançada, faz a mesma busca em todas as pastas da conta.
+- Aparece a lista de quantos resultados tem cada pasta, por exemplo "Caixa de entrada: 4 resultados" e "Arquivo: 12 resultados". Enter abre aquela pasta já com a busca feita.
+- Precisa de internet.
+
+## Ler sem internet
+- O AudioMail guarda neste computador a lista de mensagens de cada pasta e o texto das mensagens que você abre. Por isso a lista aparece na hora quando você troca de pasta, e o servidor só atualiza depois.
+- Sem internet, ele fala "Sem conexão. Mostrando as mensagens guardadas no computador", mostra o que está guardado e tenta de novo a cada minuto. Quando a conexão volta, ele avisa e tudo volta ao normal.
+- Se o computador ligar sem internet, a conta abre do mesmo jeito com o que está guardado, e entra sozinha quando a internet voltar.
+- Sem conexão dá para ler as mensagens que você já abriu antes e buscar nelas. Apagar, mover, responder e enviar precisam de internet.
+- Os anexos não são guardados, a não ser que você ligue essa opção. As mensagens sem anexo ficam guardadas inteiras.
+- Ferramentas, Mensagens guardadas no computador: liga e desliga o recurso, liga a opção de guardar os anexos, escolhe de quantos dias guardar (30, 90, 180, 365 ou sem limite), mostra o espaço usado e tem o botão para apagar tudo.
+- Tudo fica no arquivo mensagens.db da pasta de dados, criptografado pelo Windows: copiado para outro computador, não dá para ler. Ao remover uma conta, o que estava guardado dela também é apagado.
 
 ## Conversas
 - Ctrl+G liga e desliga o agrupamento por conversa, igual ao Gmail. Vem desligado.
@@ -243,6 +268,7 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 - Ctrl+A: selecionar todas.
 - Ctrl+B: marcadores do Gmail.
 - Ctrl+Shift+S: busca avançada.
+- Ctrl+Shift+T: buscar em todas as pastas.
 - Ctrl+Shift+M: carregar mais mensagens.
 - Ctrl+I: boletim da caixa.
 - F5: atualizar.
@@ -257,8 +283,8 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 - Ctrl+P: preferências.
 - F1: abrir este manual.
 - Ctrl+Q: sair de verdade.
-- Na escrita: Ctrl+Enter envia, Ctrl+S salva o rascunho, Ctrl+K abre os contatos, Ctrl+Shift+C mostra ou esconde Cópia e Cópia oculta, Ctrl+Shift+P abre as respostas prontas, Ctrl+Shift+I escreve com IA.
-- Na leitura: Ctrl+L lê o anexo escolhido; Ctrl+Enter abre o link da linha; Ctrl+R, Ctrl+Shift+R, Ctrl+Shift+F, Ctrl+S, Ctrl+E e Delete fazem o mesmo que na lista.
+- Na escrita: Ctrl+Enter envia, Ctrl+S salva o rascunho, Ctrl+K abre os contatos, Ctrl+Shift+C mostra ou esconde Cópia e Cópia oculta, Ctrl+Shift+P abre as respostas prontas, Ctrl+Shift+I escreve com IA, Ctrl+V com arquivos copiados anexa os arquivos.
+- Na leitura: Ctrl+L lê o anexo escolhido; Ctrl+P imprime; Ctrl+Enter abre o link da linha; Ctrl+R, Ctrl+Shift+R, Ctrl+Shift+F, Ctrl+S, Ctrl+E e Delete fazem o mesmo que na lista.
 
 ## Problemas comuns
 - Não consegui entrar: confira se é a senha de app e não a senha normal, e se a verificação em duas etapas está ligada. Se mudou a senha do Google, as senhas de app antigas deixam de valer: crie outra.
@@ -273,3 +299,4 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 - O AudioMail se conecta ao Gmail e às atualizações no GitHub (github.com/martimpcctrl/AudioMail).
 - Só quando você manda traduzir, ele envia o texto que você mandou traduzir ao serviço de tradução do Google, e antes pede a sua autorização.
 - Fora a tradução, as suas mensagens não passam por nenhum outro servidor.
+- As mensagens guardadas para ler sem internet ficam só neste computador, criptografadas pelo Windows (veja Ler sem internet).

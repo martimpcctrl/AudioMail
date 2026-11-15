@@ -96,11 +96,12 @@ class LabelsDialog(wx.Dialog):
 class AdvancedSearchDialog(wx.Dialog):
     """Monta o texto do campo Buscar (self.query) a partir de campos simples."""
 
-    def __init__(self, parent, current=""):
-        super().__init__(parent, title=i18n.tr("Busca avançada"),
+    def __init__(self, parent, current="", all_folders=False):
+        super().__init__(parent, title=i18n.tr("Buscar em todas as pastas" if all_folders else "Busca avançada"),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         c = sq.parse_query(current)
         self.query = ""
+        self.all_folders = all_folders
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         def field(label, value=""):
@@ -127,6 +128,9 @@ class AdvancedSearchDialog(wx.Dialog):
         self.starred.SetValue(c["starred"])
         for box in (self.attachment, self.unread, self.starred):
             sizer.Add(box, 0, wx.LEFT | wx.TOP, 10)
+        self.everywhere = wx.CheckBox(self, label=i18n.tr("Buscar em todas as pastas"))
+        self.everywhere.SetValue(all_folders)
+        sizer.Add(self.everywhere, 0, wx.LEFT | wx.TOP, 10)
         _buttons(self, sizer, [("Buscar", self.on_ok, wx.ID_OK), ("Limpar", self.on_clear, wx.ID_ANY),
                                ("Cancelar", None, wx.ID_CANCEL)])
         self.SetSizerAndFit(sizer)
@@ -149,4 +153,5 @@ class AdvancedSearchDialog(wx.Dialog):
 
     def on_ok(self, evt=None):
         self.query = self.build()
+        self.all_folders = self.everywhere.GetValue()
         self.EndModal(wx.ID_OK)

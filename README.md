@@ -18,6 +18,8 @@ Cliente de e-mail para Windows (Gmail, Yahoo, iCloud, Zoho, UOL, BOL, Terra e ou
 - Resumo de mensagens com IA (OpenAI, Google Gemini ou compatível), com a sua própria chave de API.
 - Lê anexos dentro do programa (PDF, Word, Excel, PowerPoint, LibreOffice) e descreve imagens com IA.
 - Escrever resposta com IA a partir de uma ideia, boletim falado da caixa (Ctrl+I), notificação com botões e assinatura por conta.
+- Lê sem internet as mensagens já abertas (guardadas no computador, criptografadas pelo Windows), e a lista de cada pasta abre na hora.
+- Convites de reunião com Aceitar, Talvez e Recusar, contatos e grupos, busca em todas as pastas, colar arquivos com Ctrl+V e imprimir.
 - Lembretes, calendário com feriados e chamados de suporte direto pelo programa.
 - Atualização automática conferida por SHA-256.
 

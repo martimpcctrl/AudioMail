@@ -6,7 +6,7 @@ import wx.adv
 
 import i18n
 from common import set_name
-from contacts import Contacts
+from contacts import Contacts, group_label
 
 
 def _buttons(dialog, sizer, specs):
@@ -46,6 +46,7 @@ class ContactPickerDialog(wx.Dialog):
                          style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.contacts = contacts
         self.chosen = None
+        self.chosen_name = None
         self.found = []
         sizer = wx.BoxSizer(wx.VERTICAL)
         label = i18n.tr("Buscar contato")
@@ -70,8 +71,12 @@ class ContactPickerDialog(wx.Dialog):
         self.query.SetFocus()
 
     def refresh(self):
-        self.found = self.contacts.search(self.query.GetValue(), limit=200)
-        self.list.Set([Contacts.display(c) for c in self.found])
+        # os grupos ("Família, 4 pessoas") vêm antes, e escolher um põe todos de uma vez
+        text = self.query.GetValue()
+        self.found = [("group", g) for g in self.contacts.search_groups(text)] + \
+                     [("contact", c) for c in self.contacts.search(text, limit=200)]
+        self.list.Set([i18n.tr(group_label(item)) if kind == "group" else Contacts.display(item)
+                       for kind, item in self.found])
         if self.found:
             self.list.SetSelection(0)
 
@@ -87,12 +92,15 @@ class ContactPickerDialog(wx.Dialog):
         if i == wx.NOT_FOUND or not self.found:
             text = self.query.GetValue().strip()
             if "@" in text:  # endereço digitado que ainda não está nos contatos
-                self.chosen = text
+                self.chosen = self.chosen_name = text
                 self.EndModal(wx.ID_OK)
             else:
                 wx.Bell()
             return
-        self.chosen = Contacts.display(self.found[i])
+        kind, item = self.found[i]
+        self.chosen = self.contacts.group_text(item) if kind == "group" else Contacts.display(item)
+        # o que a escrita fala: o nome do grupo, não a lista inteira de endereços
+        self.chosen_name = item["name"] if kind == "group" else self.chosen
         self.EndModal(wx.ID_OK)
 
 

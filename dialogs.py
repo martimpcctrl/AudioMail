@@ -9,6 +9,8 @@ import wx
 import mail_core as mc
 import message_text as mt
 import ai_features
+import clipboard_files
+import printing
 import sounds
 import translator
 import i18n
@@ -417,7 +419,8 @@ class ReadDialog(ai_features.AttachmentReaderMixin, wx.Dialog):
 
     def __init__(self, parent, title, text, attachments, announce, sections=None,
                  prefix="", translation=None, auto_translate=False, ai_summary=None,
-                 links=None, unsubscribe=None, organize=False, flagged=False):
+                 links=None, unsubscribe=None, organize=False, flagged=False,
+                 invite_answer=False):
         super().__init__(parent, title=i18n.tr(title),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.result = None
@@ -478,6 +481,11 @@ class ReadDialog(ai_features.AttachmentReaderMixin, wx.Dialog):
             row.Add(b, 0, wx.RIGHT, 8)
             return b
 
+        if invite_answer:
+            # convite de reunião: a resposta vai ao organizador e a reunião entra no Calendário
+            button("Aceitar convite", lambda e: self.finish("invite_accept"))
+            button("Talvez", lambda e: self.finish("invite_tentative"))
+            button("Recusar convite", lambda e: self.finish("invite_decline"))
         button("Responder", lambda e: self.finish("reply"))
         button("Responder a todos", lambda e: self.finish("replyall"))
         if organize:
@@ -495,6 +503,11 @@ class ReadDialog(ai_features.AttachmentReaderMixin, wx.Dialog):
             button("Abrir anexo", self.on_open_att)
             button("Salvar anexo", self.on_save_att)
             button("Salvar todos os anexos", self.on_save_all)
+        button("Imprimir (Ctrl+P)", self.on_print)
+        table = []
+        ident = wx.NewIdRef()
+        self.Bind(wx.EVT_MENU, self.on_print, id=ident)
+        table.append((wx.ACCEL_CTRL, ord("P"), ident))
         if organize:
             button("Tirar estrela" if flagged else "Pôr estrela", lambda e: self.finish("star"))
             button("Arquivar", lambda e: self.finish("archive"))
@@ -507,7 +520,6 @@ class ReadDialog(ai_features.AttachmentReaderMixin, wx.Dialog):
                     (wx.ACCEL_CTRL, ord("E"), "archive"),
                     (wx.ACCEL_CTRL, ord("S"), "star"),
                     (wx.ACCEL_NORMAL, wx.WXK_DELETE, "delete")]
-            table = []
             for flags, code, what in keys:
                 ident = wx.NewIdRef()
                 if what == "readatt":
@@ -517,7 +529,7 @@ class ReadDialog(ai_features.AttachmentReaderMixin, wx.Dialog):
                 else:
                     self.Bind(wx.EVT_MENU, lambda e, w=what: self.finish(w), id=ident)
                 table.append((flags, code, ident))
-            self.SetAcceleratorTable(wx.AcceleratorTable(table))
+        self.SetAcceleratorTable(wx.AcceleratorTable(table))
         button("Fechar", None, wx.ID_CANCEL)
         sizer.Add(row, 0, wx.ALL, 10)
         self.SetSizer(sizer)
@@ -531,6 +543,15 @@ class ReadDialog(ai_features.AttachmentReaderMixin, wx.Dialog):
     def finish(self, what):
         self.result = what
         self.EndModal(wx.ID_OK)
+
+    def on_print(self, evt=None):
+        try:
+            if printing.print_message(self, self.GetTitle(), self.text.GetValue()):
+                self.announce("Mensagem enviada para a impressora.")
+        except Exception as e:
+            i18n.message_box(i18n.tr("Não foi possível imprimir: %s") % e, "Imprimir",
+                             wx.OK | wx.ICON_ERROR, self)
+        self.text.SetFocus()
 
     # ---- links ----
     def open_url(self, url):
@@ -882,7 +903,7 @@ class MyTicketsDialog(wx.Dialog):
 
 # ---------- escrita ----------
 
-class ComposeDialog(ai_features.AIWriterMixin, wx.Dialog):
+class ComposeDialog(clipboard_files.PasteFilesMixin, ai_features.AIWriterMixin, wx.Dialog):
     def __init__(self, parent, client, announce, to="", cc="", bcc="", subject="",
                  body="", in_reply_to=None, references=None, attachments=None, draft=None,
                  translation=None, contacts=None, replies=None, save_replies=None,
@@ -994,6 +1015,8 @@ class ComposeDialog(ai_features.AIWriterMixin, wx.Dialog):
         self.SetSize((760, 700))
         self.CentreOnParent()
         self.refresh_attachments()
+        # Ctrl+V com arquivos copiados no Explorador vira anexo, em qualquer campo
+        self.bind_paste((self.to, self.cc, self.bcc, self.subject, self.body))
 
         # Ctrl+Enter envia, Ctrl+S salva o rascunho, Ctrl+K contatos,
         # Ctrl+Shift+C cópia e cópia oculta, Ctrl+Shift+P respostas prontas
@@ -1057,11 +1080,12 @@ class ComposeDialog(ai_features.AIWriterMixin, wx.Dialog):
         name = self.labels[target].GetLabel()
         dlg = cx.ContactPickerDialog(self, self.contacts, name)
         chosen = dlg.chosen if dlg.ShowModal() == wx.ID_OK else None
+        spoken = getattr(dlg, "chosen_name", None) or chosen
         dlg.Destroy()
         if chosen:
             target.SetValue(ct.append_address(target.GetValue(), chosen))
             target.SetInsertionPointEnd()
-            self.announce("%s adicionado em %s." % (chosen, name))
+            self.announce("%s adicionado em %s." % (spoken, name))
         target.SetFocus()
 
     def on_replies(self, evt=None):
@@ -1179,18 +1203,7 @@ class ComposeDialog(ai_features.AIWriterMixin, wx.Dialog):
         dlg = wx.FileDialog(self, i18n.tr("Escolher arquivos para anexar"),
                             style=wx.FD_OPEN | wx.FD_MULTIPLE | wx.FD_FILE_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
-            for p in dlg.GetPaths():
-                if p not in self.attach:
-                    self.attach.append(p)
-            total = sum(self.size_of(p) for p in self.attach)
-            self.refresh_attachments(len(self.attach) - 1)
-            if total > mc.MAX_ATTACH:
-                i18n.message_box("Os anexos passam do limite de envio (cerca de 18 MB no total). "
-                              "Remova algum antes de enviar.", "Aviso",
-                              wx.OK | wx.ICON_WARNING, self)
-            else:
-                self.announce("%d anexos, %s no total." % (
-                    len(self.attach), mc.format_size(total)))
+            self.add_paths(dlg.GetPaths())
         dlg.Destroy()
         self.att_list.SetFocus()
 
