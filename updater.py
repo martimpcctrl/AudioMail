@@ -37,6 +37,12 @@ MAX_FILE = 30 * 1024 * 1024
 ALLOWED_EXT = {".py", ".txt"}
 
 
+#: Variaveis que o PyInstaller deixa para os processos filhos (versao 6 e a
+#: antiga _MEIPASS2). O AudioMail reaberto nao pode herdar nenhuma.
+PYINSTALLER_PARENT_VARS = ("_MEIPASS2", "_PYI_APPLICATION_HOME_DIR", "_PYI_ARCHIVE_FILE",
+                           "_PYI_PARENT_PROCESS_LEVEL", "_PYI_SPLASH_IPC")
+
+
 class UpdateError(Exception):
     pass
 
@@ -263,7 +269,8 @@ def exe_helper_script(pid, new_exe, target_exe):
     """Texto do .bat que espera o programa fechar, troca o .exe e abre de novo."""
     return "\r\n".join([
         "@echo off",
-        'set "_MEIPASS2="',
+    ] + ['set "%s="' % name for name in PYINSTALLER_PARENT_VARS] + [
+        'set "PYINSTALLER_RESET_ENVIRONMENT=1"',
         ":wait",
         'tasklist /FI "PID eq %d" 2>nul | find " %d " >nul' % (pid, pid),
         "if errorlevel 1 goto go",
@@ -310,10 +317,23 @@ def prepare_exe_update(zip_path, target_exe, pid):
     return bat
 
 
+def clean_restart_env(environ):
+    """O ambiente para abrir o AudioMail novo como um programa independente.
+
+    O executavel de um arquivo so (PyInstaller 6) passa aos processos filhos
+    variaveis _PYI_* que dizem "voce e filho de um AudioMail ja extraido em
+    _MEIxxxx". O AudioMail novo acreditava nisso e procurava o python312.dll
+    na pasta _MEI do antigo, que ja tinha sido apagada ao fechar: "Failed to
+    load Python DLL". Sem elas, e com PYINSTALLER_RESET_ENVIRONMENT, ele se
+    extrai na propria pasta.
+    """
+    env = {key: value for key, value in environ.items()
+           if key.upper() not in PYINSTALLER_PARENT_VARS and not key.upper().startswith("_PYI_")}
+    env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+    return env
+
+
 def launch_detached(bat):
     flags = 0x08000000 | 0x00000200  # sem janela, em grupo proprio
-    env = os.environ.copy()
-    # PyInstaller's one-file bootloader may leave this extraction path in child envs.
-    # The old _MEI directory disappears when this process exits, breaking the new app.
-    env.pop("_MEIPASS2", None)
-    subprocess.Popen(["cmd", "/c", bat], creationflags=flags, close_fds=True, env=env)
+    subprocess.Popen(["cmd", "/c", bat], creationflags=flags, close_fds=True,
+                     env=clean_restart_env(os.environ))

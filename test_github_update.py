@@ -74,5 +74,29 @@ class GerarVersionJson(unittest.TestCase):
             gerar.build_manifest("1.x", {"exe": self.exe})
 
 
+class Reinicio(unittest.TestCase):
+    """O AudioMail reaberto depois da atualização não herda a pasta _MEI do antigo."""
+
+    PARENT = {"_PYI_APPLICATION_HOME_DIR": r"C:\Temp\_MEI000041dc2", "_PYI_ARCHIVE_FILE": r"C:\AudioMail.exe",
+              "_PYI_PARENT_PROCESS_LEVEL": "1", "_MEIPASS2": r"C:\Temp\_MEI1", "PATH": r"C:\Windows"}
+
+    def test_o_ambiente_do_novo_processo_nao_tem_as_variaveis_do_antigo(self):
+        env = updater.clean_restart_env(self.PARENT)
+        self.assertEqual(env, {"PATH": r"C:\Windows", "PYINSTALLER_RESET_ENVIRONMENT": "1"})
+
+    def test_qualquer_variavel_pyi_futura_tambem_sai(self):
+        env = updater.clean_restart_env({"_PYI_ALGO_NOVO": "x", "_pyi_application_home_dir": "y"})
+        self.assertNotIn("_PYI_ALGO_NOVO", env)
+        self.assertNotIn("_pyi_application_home_dir", env)
+
+    def test_o_bat_limpa_as_variaveis_antes_de_abrir(self):
+        bat = updater.exe_helper_script(1234, r"C:\AudioMail.new", r"C:\AudioMail.exe")
+        lines = bat.split(chr(13) + chr(10))
+        start = next(n for n, line in enumerate(lines) if line.startswith('start ""'))
+        for name in updater.PYINSTALLER_PARENT_VARS:
+            self.assertLess(lines.index('set "%s="' % name), start)
+        self.assertLess(lines.index('set "PYINSTALLER_RESET_ENVIRONMENT=1"'), start)
+
+
 if __name__ == "__main__":
     unittest.main()
