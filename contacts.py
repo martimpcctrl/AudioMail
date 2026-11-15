@@ -15,6 +15,26 @@ MAX_CONTACTS = 3000
 _SEPARATORS = re.compile(r"[,;]")
 
 
+def parse_addresses(*values):
+    """[(nome, endereço)] de um ou mais campos (Para, Cópia, Cópia oculta).
+
+    O getaddresses do Python 3.12 ficou rigoroso: com um campo vazio na lista,
+    ou uma vírgula sobrando, ele descarta TODOS os endereços. Por isso cada
+    campo é lido separado, sem vazios, e um campo que ele recusa é lido
+    endereço por endereço."""
+    found = []
+    for value in values:
+        value = (value or "").replace(";", ",").strip().strip(",").strip()
+        if not value:
+            continue
+        parsed = [(n, a) for n, a in getaddresses([value]) if a]
+        if not parsed:
+            for piece in value.split(","):
+                parsed.extend((n, a) for n, a in getaddresses([piece.strip()]) if a)
+        found.extend(parsed)
+    return found
+
+
 def _clean_name(name, addr):
     name = re.sub(r"\s+", " ", (name or "").strip().strip('"\'')).strip()
     return "" if name.lower() == addr.lower() else name
@@ -72,7 +92,7 @@ class Contacts:
         """Acrescenta todos os endereços de um cabeçalho (From, To, Cc...)."""
         skip = {s.lower() for s in skip}
         added = False
-        for name, addr in getaddresses([value or ""]):
+        for name, addr in parse_addresses(value):
             if addr and addr.lower() not in skip:
                 added = self.add(name, addr, weight) or added
         return added
@@ -103,7 +123,7 @@ class Contacts:
         head = field_text[:len(field_text) - len(parts[-1])]
         if head and not head.endswith(" "):
             head += " "
-        already = {a.lower() for _, a in getaddresses([head])}
+        already = {a.lower() for _, a in parse_addresses(head)}
         return [head + self.display(c) for c in self.search(typed, limit + len(already))
                 if c["addr"].lower() not in already][:limit]
 

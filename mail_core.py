@@ -17,6 +17,7 @@ from html.parser import HTMLParser
 
 import i18n
 import message_text as mt
+from contacts import parse_addresses
 
 _OUTLOOK = ("outlook.office365.com", 993, "smtp-mail.outlook.com", 587, "starttls")
 _YAHOO = ("imap.mail.yahoo.com", 993, "smtp.mail.yahoo.com", 465, "ssl")
@@ -253,7 +254,7 @@ def build_reply(orig, my_email, reply_all=False):
     if reply_all:
         seen = {parseaddr(to)[1].lower(), my_email.lower()}
         others = []
-        for name, addr in getaddresses([orig["to"], orig["cc"]]):
+        for name, addr in parse_addresses(orig["to"], orig["cc"]):
             if addr and addr.lower() not in seen:
                 seen.add(addr.lower())
                 others.append(formataddr((name, addr)))
@@ -367,7 +368,7 @@ MAX_ATTACH = 18 * 1024 * 1024  # o Gmail limita a mensagem a 25 MB depois da cod
 def build_message(sender, to, cc, bcc, subject, body, in_reply_to=None,
                   references=None, attachments=None, draft=False):
     to, cc, bcc = (x.replace(";", ",") for x in (to or "", cc or "", bcc or ""))
-    recipients = [a for _, a in getaddresses([to, cc, bcc]) if a]
+    recipients = [a for _, a in parse_addresses(to, cc, bcc)]
     if not recipients and not draft:
         raise MailError("Informe pelo menos um destinatário.")
     msg = EmailMessage()

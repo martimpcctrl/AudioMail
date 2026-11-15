@@ -214,5 +214,35 @@ class Provedores(unittest.TestCase):
         self.assertFalse(providers.valid_server(dict(server, imap_host="sem ponto")))
 
 
+class EnderecosComCamposVazios(unittest.TestCase):
+    """O Python 3.12 descartava todos os endereços quando Cópia ou Cópia oculta
+    estava vazia: "Informe pelo menos um destinatário" com o Para preenchido."""
+
+    def test_so_o_para_basta(self):
+        import mail_core as mc
+        msg, recipients = mc.build_message("eu@x.com", "ana@x.com", "", "", "Oi", "texto")
+        self.assertEqual(recipients, ["ana@x.com"])
+        self.assertIsNone(msg["Cc"])
+
+    def test_virgula_sobrando_e_ponto_e_virgula(self):
+        self.assertEqual([a for _, a in ct.parse_addresses("ana@x.com, ", "", "b@x.com; c@x.com;")],
+                         ["ana@x.com", "b@x.com", "c@x.com"])
+
+    def test_campo_com_lixo_nao_derruba_os_outros(self):
+        found = [a for _, a in ct.parse_addresses("ana@x.com", "Fulano <bia@x.com>, ,, ", "")]
+        self.assertEqual(found, ["ana@x.com", "bia@x.com"])
+
+    def test_responder_a_todos_sem_copia_na_original(self):
+        import mail_core as mc
+        orig = {"reply_to": "", "from": "Ana <ana@x.com>", "to": "eu@x.com, bia@x.com", "cc": "",
+                "subject": "Oi", "body": "x", "date": "d", "references": "", "message_id": "<1@x>"}
+        self.assertEqual(mc.build_reply(orig, "eu@x.com", True)["cc"], "bia@x.com")
+
+    def test_sem_nenhum_destinatario_continua_avisando(self):
+        import mail_core as mc
+        with self.assertRaises(mc.MailError):
+            mc.build_message("eu@x.com", "", "", "", "Oi", "texto")
+
+
 if __name__ == "__main__":
     unittest.main()
