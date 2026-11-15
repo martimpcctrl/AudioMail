@@ -8,6 +8,7 @@ import wx
 
 import mail_core as mc
 import message_text as mt
+import ai_features
 import sounds
 import translator
 import i18n
@@ -411,7 +412,7 @@ def unique_path(folder, name):
     return path
 
 
-class ReadDialog(wx.Dialog):
+class ReadDialog(ai_features.AttachmentReaderMixin, wx.Dialog):
     """Mostra uma mensagem (ou conversa) e permite responder e mexer nos anexos."""
 
     def __init__(self, parent, title, text, attachments, announce, sections=None,
@@ -490,6 +491,7 @@ class ReadDialog(wx.Dialog):
         if unsubscribe:
             button("Cancelar inscrição", lambda e: self.unsubscribe(self))
         if attachments:
+            button("Ler anexo (Ctrl+L)", self.on_read_att)
             button("Abrir anexo", self.on_open_att)
             button("Salvar anexo", self.on_save_att)
             button("Salvar todos os anexos", self.on_save_all)
@@ -499,6 +501,7 @@ class ReadDialog(wx.Dialog):
             button("Apagar", lambda e: self.finish("delete"))
             # os mesmos atalhos da janela principal, como nos programas de e-mail
             keys = [(wx.ACCEL_CTRL, ord("R"), "reply"),
+                    (wx.ACCEL_CTRL, ord("L"), "readatt"),
                     (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("R"), "replyall"),
                     (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("F"), "forward"),
                     (wx.ACCEL_CTRL, ord("E"), "archive"),
@@ -507,7 +510,12 @@ class ReadDialog(wx.Dialog):
             table = []
             for flags, code, what in keys:
                 ident = wx.NewIdRef()
-                self.Bind(wx.EVT_MENU, lambda e, w=what: self.finish(w), id=ident)
+                if what == "readatt":
+                    if not attachments:
+                        continue
+                    self.Bind(wx.EVT_MENU, self.on_read_att, id=ident)
+                else:
+                    self.Bind(wx.EVT_MENU, lambda e, w=what: self.finish(w), id=ident)
                 table.append((flags, code, ident))
             self.SetAcceleratorTable(wx.AcceleratorTable(table))
         button("Fechar", None, wx.ID_CANCEL)
@@ -874,13 +882,14 @@ class MyTicketsDialog(wx.Dialog):
 
 # ---------- escrita ----------
 
-class ComposeDialog(wx.Dialog):
+class ComposeDialog(ai_features.AIWriterMixin, wx.Dialog):
     def __init__(self, parent, client, announce, to="", cc="", bcc="", subject="",
                  body="", in_reply_to=None, references=None, attachments=None, draft=None,
                  translation=None, contacts=None, replies=None, save_replies=None,
-                 show_cc=False, undo_seconds=0):
+                 show_cc=False, undo_seconds=0, ai=None):
         super().__init__(parent, title=i18n.tr("Nova mensagem"),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.ai = ai
         self.client = client
         self.announce = announce
         self.in_reply_to = in_reply_to
@@ -951,7 +960,10 @@ class ComposeDialog(wx.Dialog):
         row = wx.BoxSizer(wx.HORIZONTAL)
         self.replies_btn = wx.Button(self, label=i18n.tr("Respostas prontas (Ctrl+Shift+P)"))
         self.replies_btn.Bind(wx.EVT_BUTTON, self.on_replies)
-        row.Add(self.replies_btn, 0)
+        row.Add(self.replies_btn, 0, wx.RIGHT, 8)
+        self.ai_btn = wx.Button(self, label=i18n.tr("Escrever com IA (Ctrl+Shift+I)"))
+        self.ai_btn.Bind(wx.EVT_BUTTON, self.on_ai_write)
+        row.Add(self.ai_btn, 0)
         sizer.Add(row, 0, wx.LEFT | wx.TOP, 10)
 
         if translation:
@@ -990,7 +1002,9 @@ class ComposeDialog(wx.Dialog):
         self.Bind(wx.EVT_MENU, self.on_contacts, id=self.contacts_btn.GetId())
         self.Bind(wx.EVT_MENU, self.on_toggle_cc, id=self.cc_btn.GetId())
         self.Bind(wx.EVT_MENU, self.on_replies, id=self.replies_btn.GetId())
+        self.Bind(wx.EVT_MENU, self.on_ai_write, id=self.ai_btn.GetId())
         self.SetAcceleratorTable(wx.AcceleratorTable([
+            wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("I"), self.ai_btn.GetId()),
             wx.AcceleratorEntry(wx.ACCEL_CTRL, wx.WXK_RETURN, self.send_btn.GetId()),
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("S"), self.draft_btn.GetId()),
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("K"), self.contacts_btn.GetId()),

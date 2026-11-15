@@ -148,6 +148,13 @@ Tab moves through Account (when you have more than one), Folder, Search, and Mes
 - Search accepts Gmail syntax: from:ana subject:invoice has:attachment is:unread is:starred newer_than:7d older_than:1y after:2026/01/31 before:2026/12/31. File, Advanced search (Ctrl+Shift+S) builds it from simple fields.
 - If the text mentions an attachment but no file is attached, AudioMail asks before sending.
 
+## Attachments, images and AI
+- In the reading window, Read attachment (Ctrl+L) shows the text of PDF, Word, Excel, PowerPoint, LibreOffice, RTF, HTML, attached emails and text files, without opening another program. For photos and images it asks the AI (the same one used for summaries) for a description, including any text in the image. Images inside the email body also appear in the Attachments list.
+- In the compose window, Write with AI (Ctrl+Shift+I) asks what you want to say and writes the text at the start of the message for you to review.
+- File, Inbox briefing (Ctrl+I), also in the tray menu, says how many unread messages each account has and who sent them, plus Gmail tabs, today's reminders and messages scheduled for today.
+- New message notifications have Reply, Archive and Mark as read buttons (in the Windows notification center, Windows+N). The tray menu has the same actions for the latest new message. For this, AudioMail creates an AudioMail shortcut in the Start menu.
+- Tools, Signature for this account sets a signature for the open account only.
+
 ## Rules and blocked senders
 - Tools, Rules (Ctrl+Shift+G). A rule checks each new Inbox message: when the Sender, Subject or Recipient contains the text, it can move it to a folder, mark it as read, star it, delete it or play its own sound.
 - Rules run in list order (Move up, Move down). Message, Create rule from this message fills in the sender for you. Apply to the inbox now runs the rules on messages already there.
@@ -234,6 +241,13 @@ Tab recorre Cuenta (si tienes más de una), Carpeta, Buscar y Mensajes. Carpeta 
 - En Gmail, la lista de carpetas tiene las pestañas Principal, Promociones, Social, Notificaciones y Foros. Ctrl+B abre las etiquetas del mensaje: Espacio marca o desmarca cada una y Nueva etiqueta crea otra.
 - La búsqueda acepta la sintaxis de Gmail: from:ana subject:factura has:attachment is:unread is:starred newer_than:7d older_than:1y after:2026/01/31 before:2026/12/31. Archivo, Búsqueda avanzada (Ctrl+Shift+S) la arma con campos simples.
 - Si el texto menciona un adjunto pero no hay ningún archivo, AudioMail pregunta antes de enviar.
+
+## Adjuntos, imágenes e IA
+- En la lectura, Leer adjunto (Ctrl+L) muestra el texto de PDF, Word, Excel, PowerPoint, LibreOffice, RTF, HTML, correos adjuntos y archivos de texto, sin abrir otro programa. En fotos e imágenes pide a la IA (la misma del resumen) una descripción, con el texto que aparezca en la imagen. Las imágenes dentro del correo también aparecen en la lista Adjuntos.
+- En la escritura, Escribir con IA (Ctrl+Shift+I) pregunta qué quiere decir y escribe el texto al principio del mensaje para que lo revise.
+- Archivo, Resumen de la bandeja (Ctrl+I), también en el menú de la bandeja, dice cuántos no leídos tiene cada cuenta y de quién son, además de las pestañas de Gmail, los recordatorios de hoy y los mensajes programados para hoy.
+- Los avisos de mensaje nuevo tienen los botones Responder, Archivar y Marcar como leído (en el centro de notificaciones de Windows, Windows+N). El menú de la bandeja tiene las mismas acciones para el último mensaje nuevo. Para esto, AudioMail crea un acceso directo AudioMail en el menú Inicio.
+- Herramientas, Firma de esta cuenta define una firma solo para la cuenta abierta.
 
 ## Reglas y remitentes bloqueados
 - Herramientas, Reglas (Ctrl+Shift+G). Una regla revisa cada mensaje nuevo de la bandeja de entrada: si el Remitente, el Asunto o el Destinatario contiene el texto, puede moverlo a una carpeta, marcarlo como leído, destacarlo, eliminarlo o reproducir un sonido propio.

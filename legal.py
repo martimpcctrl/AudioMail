@@ -8,13 +8,13 @@ import i18n
 
 # Altere este identificador sempre que o texto legal mudar. Usuarios existentes
 # que ainda nao o aceitaram voltarao a ver a tela obrigatoria.
-LEGAL_VERSION = "2026-11-15-1"
+LEGAL_VERSION = "2026-11-15-2"
 CONTACT_EMAIL = "martimpc318@gmail.com"
 
 DOCUMENTS = {
     "pt": {
         "privacy": ("Política de privacidade", """POLÍTICA DE PRIVACIDADE DO AUDIOMAIL
-Versão 2 — 15 de novembro de 2026
+Versão 3 — 15 de novembro de 2026
 
 1. Quem responde e como falar
 Martim Alves é o responsável pelo AudioMail. Para exercer direitos sobre dados ou fazer perguntas de privacidade, escreva para martimpc318@gmail.com. Também é possível abrir um chamado em Ajuda > Abrir chamado de suporte.
@@ -24,6 +24,7 @@ Martim Alves é o responsável pelo AudioMail. Para exercer direitos sobre dados
 • Mensagens, contatos, anexos e pastas são obtidos do provedor de e-mail para mostrar as funções solicitadas. O AudioMail não envia cópias dessas mensagens ao responsável pelo aplicativo.
 • Se você abrir um chamado, o aplicativo envia ao servidor de suporte o assunto, tipo, texto do chamado e versão do AudioMail. O chamado é armazenado no painel de suporte para atendimento. Não são enviados automaticamente e-mail da conta, mensagens ou anexos. O servidor e o provedor de hospedagem podem tratar dados técnicos da conexão, como endereço IP, para entregar e proteger o serviço.
 • Se você pedir um resumo com IA, o conteúdo da mensagem ou conversa escolhido e as instruções do resumo são enviados ao provedor selecionado (OpenAI, Google Gemini ou endpoint compatível que você configurar), com a chave de API que você forneceu. O provedor trata os dados conforme seus próprios termos e políticas; não informe conteúdo que não queira compartilhar com esse provedor. A chave fica cifrada localmente. O recurso só envia conteúdo quando você pede e confirma autorização.
+• Do mesmo jeito, se você pedir a descrição de uma imagem (anexo ou imagem dentro do e-mail), a imagem é enviada a esse provedor; e se usar Escrever com IA, o que você escreveu como ideia e a mensagem que está sendo respondida são enviados a ele. Cada recurso pede autorização na primeira vez. Os anexos lidos como texto (PDF, Word, Excel...) são lidos no seu computador e não são enviados a ninguém.
 • Se você pedir tradução, o texto selecionado é enviado ao serviço Google Translate. A autorização é solicitada antes do primeiro envio e pode ser alterada nas configurações.
 • O calendário pode consultar feriados nacionais na API pública Nager.Date. Os resultados são guardados em cache local; a consulta transmite o ano solicitado e dados técnicos da conexão ao serviço.
 • A verificação de atualizações acessa o GitHub (github.com, serviço da GitHub, Inc., empresa da Microsoft), onde o AudioMail é publicado, para consultar versões e, quando você instala, baixar arquivos. Essa comunicação inclui os dados técnicos usuais de uma conexão web.
@@ -50,7 +51,7 @@ O AudioMail é um cliente para acessar contas de e-mail compatíveis, organizar 
 Ao selecionar “Li e aceito”, você confirma que teve acesso a estes Termos e à Política de privacidade e aceita usá-los como regras do aplicativo. Use o AudioMail somente em contas e conteúdos que esteja autorizado a acessar. Você é responsável por proteger sua senha de aplicativo, suas chaves de API e os dados exibidos ou enviados. Não use o programa para violar leis, direitos de terceiros, regras do provedor de e-mail ou termos dos serviços externos.
 
 3. Provedores externos e recursos opcionais
-O acesso ao e-mail depende do seu provedor e das credenciais fornecidas. Tradução, resumo com IA, consulta de feriados e atualizações dependem de serviços externos, que podem ficar indisponíveis ou mudar suas condições. Você escolhe e configura a chave, o provedor e o modelo de IA; custos de API, limites e regras são definidos pelo respectivo provedor. Confira os dados antes de enviar e não compartilhe informações que não queira encaminhar a terceiros. Resumos e traduções podem conter erros e devem ser conferidos antes de decisões ou envios.
+O acesso ao e-mail depende do seu provedor e das credenciais fornecidas. Tradução, resumo com IA, consulta de feriados e atualizações dependem de serviços externos, que podem ficar indisponíveis ou mudar suas condições. Você escolhe e configura a chave, o provedor e o modelo de IA; custos de API, limites e regras são definidos pelo respectivo provedor. Confira os dados antes de enviar e não compartilhe informações que não queira encaminhar a terceiros. Resumos, traduções, descrições de imagens e textos escritos pela IA podem conter erros e devem ser conferidos antes de decisões ou envios.
 
 4. Chamados e conteúdo
 Ao abrir um chamado, você autoriza o envio dos campos mostrados no formulário para atendimento. Não inclua senhas nem dados desnecessários. O responsável pode concluir um chamado após o atendimento. Chamados não são um canal de emergência e não há prazo garantido de resposta.
@@ -67,7 +68,7 @@ Aplicam-se as leis da República Federativa do Brasil, preservadas as regras obr
     },
     "en": {
         "privacy": ("Privacy policy", """AUDIOMAIL PRIVACY POLICY
-Version 2 — November 15, 2026
+Version 3 — November 15, 2026
 
 1. Who is responsible and how to contact us
 Martim Alves is responsible for AudioMail. For privacy questions or requests about personal data, email martimpc318@gmail.com. You can also open a ticket at Help > Open support ticket.
@@ -77,6 +78,7 @@ Martim Alves is responsible for AudioMail. For privacy questions or requests abo
 • Messages, contacts, attachments and folders are obtained from your email provider to provide requested features. AudioMail does not send copies of those messages to the app maintainer.
 • When you submit a support ticket, the app sends its subject, type, text and AudioMail version to the support server. Tickets are stored in the support panel. Your email account, messages and attachments are not sent automatically. The server and hosting provider may process technical connection data, such as IP address, to deliver and protect the service.
 • When you request an AI summary, the selected message or conversation and summary instructions are sent to your chosen provider (OpenAI, Google Gemini or a compatible endpoint you configure), using your API key. The provider processes data under its own terms and policies. Do not submit content you do not wish to share with that provider. The key is encrypted locally. Content is sent only when you request a summary and authorize it.
+• In the same way, if you ask for an image description (an attachment or an image inside an email), the image is sent to that provider; and if you use Write with AI, the idea you typed and the message you are replying to are sent to it. Each feature asks for permission the first time. Attachments read as text (PDF, Word, Excel...) are read on your computer and are not sent to anyone.
 • When you request translation, the selected text is sent to Google Translate. Permission is requested before the first transmission and can be changed in settings.
 • The calendar may query national holidays from the public Nager.Date API. Results are cached locally; the requested year and technical connection data are sent to that service.
 • Update checks contact GitHub (github.com, a service of GitHub, Inc., a Microsoft company), where AudioMail is published, for version information and, when you install an update, download files. This web connection includes ordinary technical connection data.
@@ -103,7 +105,7 @@ AudioMail is an email client for compatible accounts. It can organize messages, 
 By selecting “I have read and accept”, you confirm that these Terms and the Privacy Policy were made available to you and agree to use the app under these rules. Use AudioMail only with accounts and content you are authorized to access. You are responsible for protecting your app password, API keys and data you view or send. Do not use the app to violate laws, third-party rights, your email provider’s rules or external service terms.
 
 3. External providers and optional features
-Email access depends on your provider and credentials. Translation, AI summaries, holiday lookup and updates depend on external services that may be unavailable or change their terms. You choose and configure the AI key, provider and model; API fees, limits and rules are set by that provider. Review data before sending it, and do not share information you do not want to send to third parties. Summaries and translations can be wrong and should be checked before decisions or sending messages.
+Email access depends on your provider and credentials. Translation, AI summaries, holiday lookup and updates depend on external services that may be unavailable or change their terms. You choose and configure the AI key, provider and model; API fees, limits and rules are set by that provider. Review data before sending it, and do not share information you do not want to send to third parties. Summaries, translations, image descriptions and AI-written text can be wrong and should be checked before decisions or sending messages.
 
 4. Support tickets and content
 Submitting a ticket authorizes sending the fields shown in the form for support. Do not include passwords or unnecessary data. The maintainer may mark a ticket complete after handling it. Tickets are not an emergency channel and no response time is guaranteed.
@@ -120,7 +122,7 @@ The laws of the Federative Republic of Brazil apply, while mandatory consumer an
     },
     "es": {
         "privacy": ("Política de privacidad", """POLÍTICA DE PRIVACIDAD DE AUDIOMAIL
-Versión 2 — 15 de noviembre de 2026
+Versión 3 — 15 de noviembre de 2026
 
 1. Responsable y contacto
 Martim Alves es responsable de AudioMail. Para consultas de privacidad o solicitudes sobre datos personales, escribe a martimpc318@gmail.com. También puedes abrir una solicitud en Ayuda > Abrir solicitud de soporte.
@@ -130,6 +132,7 @@ Martim Alves es responsable de AudioMail. Para consultas de privacidad o solicit
 • Los mensajes, contactos, archivos adjuntos y carpetas se obtienen del proveedor de correo para ofrecer las funciones solicitadas. AudioMail no envía copias de esos mensajes al responsable de la aplicación.
 • Al enviar una solicitud de soporte, la aplicación envía su asunto, tipo, texto y versión de AudioMail al servidor de soporte. Las solicitudes se guardan en el panel de soporte. La cuenta de correo, los mensajes y los archivos adjuntos no se envían automáticamente. El servidor y el proveedor de alojamiento pueden tratar datos técnicos de conexión, como la dirección IP, para prestar y proteger el servicio.
 • Al pedir un resumen con IA, el mensaje o conversación seleccionados y las instrucciones se envían al proveedor elegido (OpenAI, Google Gemini o un endpoint compatible que configures), usando tu clave API. El proveedor trata los datos según sus propios términos y políticas. No envíes contenido que no quieras compartir con ese proveedor. La clave se cifra localmente. El contenido solo se envía cuando pides el resumen y lo autorizas.
+• Del mismo modo, si pides la descripción de una imagen (un adjunto o una imagen dentro del correo), la imagen se envía a ese proveedor; y si usas Escribir con IA, la idea que escribiste y el mensaje que respondes se envían a él. Cada función pide autorización la primera vez. Los adjuntos leídos como texto (PDF, Word, Excel...) se leen en tu equipo y no se envían a nadie.
 • Al pedir una traducción, el texto seleccionado se envía a Google Translate. Se solicita permiso antes del primer envío y puedes cambiarlo en la configuración.
 • El calendario puede consultar los feriados nacionales en la API pública Nager.Date. Los resultados se guardan localmente; se envían el año solicitado y datos técnicos de conexión.
 • La búsqueda de actualizaciones contacta GitHub (github.com, un servicio de GitHub, Inc., empresa de Microsoft), donde se publica AudioMail, para consultar versiones y, cuando instalas una actualización, descargar archivos. Esta conexión incluye datos técnicos habituales de una conexión web.
@@ -156,7 +159,7 @@ AudioMail es un cliente para acceder a cuentas de correo compatibles, organizar 
 Al seleccionar “He leído y acepto”, confirmas que tuviste acceso a estos Términos y a la Política de privacidad y aceptas usar la aplicación según estas reglas. Usa AudioMail solo con cuentas y contenido a los que estés autorizado a acceder. Eres responsable de proteger tu contraseña de aplicación, claves API y los datos que consultes o envíes. No uses la aplicación para infringir leyes, derechos de terceros, reglas de tu proveedor de correo o términos de servicios externos.
 
 3. Proveedores externos y funciones opcionales
-El acceso al correo depende de tu proveedor y credenciales. La traducción, resúmenes con IA, consulta de feriados y actualizaciones dependen de servicios externos que pueden no estar disponibles o cambiar sus condiciones. Tú eliges y configuras la clave API, el proveedor y el modelo de IA; el proveedor define tarifas, límites y reglas de la API. Revisa los datos antes de enviarlos y no compartas información que no quieras enviar a terceros. Los resúmenes y traducciones pueden contener errores y deben revisarse antes de tomar decisiones o enviar mensajes.
+El acceso al correo depende de tu proveedor y credenciales. La traducción, resúmenes con IA, consulta de feriados y actualizaciones dependen de servicios externos que pueden no estar disponibles o cambiar sus condiciones. Tú eliges y configuras la clave API, el proveedor y el modelo de IA; el proveedor define tarifas, límites y reglas de la API. Revisa los datos antes de enviarlos y no compartas información que no quieras enviar a terceros. Los resúmenes, traducciones, descripciones de imágenes y textos escritos por la IA pueden contener errores y deben revisarse antes de tomar decisiones o enviar mensajes.
 
 4. Solicitudes de soporte y contenido
 Al enviar una solicitud, autorizas el envío de los campos mostrados en el formulario para recibir soporte. No incluyas contraseñas ni datos innecesarios. El responsable puede marcar una solicitud como concluida después de atenderla. No es un canal de emergencia y no se garantiza un plazo de respuesta.

@@ -16,6 +16,8 @@ Cliente de e-mail para Windows (Gmail, Yahoo, iCloud, Zoho, UOL, BOL, Terra e ou
 - Busca, conversas, pastas, rascunhos e atalhos de teclado para tudo.
 - Tradução de mensagens e do texto que você escreve.
 - Resumo de mensagens com IA (OpenAI, Google Gemini ou compatível), com a sua própria chave de API.
+- Lê anexos dentro do programa (PDF, Word, Excel, PowerPoint, LibreOffice) e descreve imagens com IA.
+- Escrever resposta com IA a partir de uma ideia, boletim falado da caixa (Ctrl+I), notificação com botões e assinatura por conta.
 - Lembretes, calendário com feriados e chamados de suporte direto pelo programa.
 - Atualização automática conferida por SHA-256.
 

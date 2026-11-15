@@ -26,6 +26,8 @@ import providers
 import compose_extras as cx
 import organize
 import views
+import inbox_extras
+import bulletin
 from contacts import Contacts
 from common import data_dir
 from common import (DEFAULTS, config_path, default_sound_path, find_account, forget_password,
@@ -130,13 +132,46 @@ class AISummaryService:
     def configured(self):
         return bool(get_ai_api_key(self.frame.cfg, self.provider))
 
-    def summarize(self, text):
-        language = {"pt": "português", "en": "English", "es": "español"}.get(
+    def _args(self):
+        return (self.provider, get_ai_api_key(self.frame.cfg, self.provider),
+                self.frame.setting("ai_summary_model"), self.frame.setting("ai_summary_endpoint"))
+
+    def language(self):
+        return {"pt": "português", "en": "English", "es": "español"}.get(
             self.frame.setting("ui_language"), "português")
-        return ai_summary.summarize(
-            text, self.provider, get_ai_api_key(self.frame.cfg, self.provider),
-            self.frame.setting("ai_summary_model"), self.frame.setting("ai_summary_endpoint"),
-            language=language)
+
+    def summarize(self, text):
+        return ai_summary.summarize(text, *self._args(), language=self.language())
+
+    def describe_image(self, image, mime):
+        return ai_summary.describe_image(image, mime, *self._args(), language=self.language())
+
+    def write_reply(self, idea, context):
+        return ai_summary.write_reply(idea, context, *self._args(), language=self.language())
+
+    def ask_consent_for(self, parent, kind):
+        """Autorização para mandar uma imagem ("image") ou a ideia de resposta ("reply")
+        à IA; cada uma é pedida uma vez por provedor."""
+        consents = self.frame.cfg.setdefault("ai_consent_kinds", {})
+        key = "%s:%s" % (self.provider, kind)
+        if consents.get(key):
+            return True
+        provider_name = {"openai": "OpenAI", "gemini": "Gemini",
+                         "compatible": "outro provedor configurado"}.get(self.provider, self.provider)
+        if kind == "image":
+            text = i18n.tr("A imagem será enviada ao %s usando sua chave de API, para ele descrever. "
+                           "O provedor pode cobrar pelo uso. Autorizar agora e nas próximas vezes?") % provider_name
+            caption = "Descrever imagem"
+        else:
+            text = i18n.tr("O que você escrever e a mensagem que está sendo respondida serão enviados "
+                           "ao %s usando sua chave de API. O provedor pode cobrar pelo uso. Autorizar "
+                           "agora e nas próximas vezes?") % provider_name
+            caption = "Escrever com IA"
+        if i18n.message_box(text, caption, wx.YES_NO | wx.ICON_QUESTION, parent) != wx.YES:
+            return False
+        consents[key] = True
+        save_config(self.frame.cfg)
+        return True
 
     def ask_consent(self, parent):
         consents = self.frame.cfg.setdefault("ai_summary_consent", {})
@@ -169,16 +204,23 @@ class TrayIcon(wx.adv.TaskBarIcon):
 
     def CreatePopupMenu(self):
         menu = wx.Menu()
-        for label, fn in (("Abrir AudioMail", self.frame.restore),
-                          ("Verificar agora", self.frame.check_now),
-                          ("Configurações", self.frame.open_settings),
-                          ("Sair", self.frame.quit)):
+        f = self.frame
+        entries = [("Abrir AudioMail", f.restore), ("Verificar agora", f.check_now),
+                   ("Boletim da caixa", f.speak_bulletin)]
+        if getattr(f, "last_new", None):
+            # as mesmas ações da notificação, para quem prefere o menu da bandeja
+            entries += [("Responder à última mensagem nova", lambda: f.last_new_action(bulletin.ACTION_REPLY)),
+                        ("Arquivar a última mensagem nova", lambda: f.last_new_action(bulletin.ACTION_ARCHIVE)),
+                        ("Marcar a última mensagem nova como lida",
+                         lambda: f.last_new_action(bulletin.ACTION_READ))]
+        entries += [("Configurações", f.open_settings), ("Sair", f.quit)]
+        for label, fn in entries:
             item = menu.Append(wx.ID_ANY, i18n.tr(label))
-            menu.Bind(wx.EVT_MENU, lambda e, f=fn: f(), item)
+            menu.Bind(wx.EVT_MENU, lambda e, fn=fn: fn(), item)
         return menu
 
 
-class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
+class MainFrame(inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
     def SetStatusText(self, text, number=0):
         return super().SetStatusText(i18n.tr(text), number)
 
@@ -192,6 +234,8 @@ class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
         super().__init__(None, title="AudioMail", size=(960, 640))
         self.cfg = load_config()
         i18n.set_language(self.cfg.get("ui_language", "pt"))
+        self.toasts = inbox_extras.enable_toasts()   # notificações com botões
+        self.last_new = None
         self.accounts = []
         self.active = None
         self.login_open = False
@@ -348,6 +392,7 @@ class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
         self.add(m, "Buscar\tCtrl+F", lambda e: self.search_box.SetFocus())
         self.add(m, "Busca avançada...\tCtrl+Shift+S", lambda e: self.open_advanced_search())
         self.add(m, "Carregar mais mensagens\tCtrl+Shift+M", lambda e: self.load_more())
+        self.add(m, "Boletim da caixa\tCtrl+I", lambda e: self.speak_bulletin())
         self.add(m, "Ir para as pastas\tF6", lambda e: self.choice.SetFocus())
         self.add(m, "Ir para as contas\tF7", lambda e: self.account_choice.SetFocus())
         self.add(m, "Adicionar conta", lambda e: self.ask_login(blank=True))
@@ -395,6 +440,7 @@ class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
         self.add(m, "Calendário", lambda e: self.open_reminders())
         self.add(m, "Regras\tCtrl+Shift+G", lambda e: self.open_rules())
         self.add(m, "Remetentes bloqueados", lambda e: self.open_blocked())
+        self.add(m, "Assinatura desta conta...", lambda e: self.edit_account_signature())
         bar.Append(m, i18n.tr("&Ferramentas"))
 
         m = wx.Menu()
@@ -678,7 +724,9 @@ class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
         if len(self.accounts) > 1:
             text = "%s (%s)" % (text, acc.email)
         if self.setting("notify"):
-            self.toast(title, text)
+            self.toast_new(acc, new, title, text)
+        else:
+            self.last_new = (acc, [m["uid"] for m in new])
         if sound:
             sounds.play(sound)     # som próprio de uma regra
         elif self.setting("sound"):
@@ -1371,7 +1419,7 @@ class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
         acc = self.active
         if not acc or not acc.client:
             return
-        signature = self.setting("signature").strip()
+        signature = self.signature_for(acc)
         if add_signature and signature:
             body = "\n\n-- \n" + signature + body
         dlg = ComposeDialog(self, acc.client, self.announce, to=to, cc=cc, bcc=bcc,
@@ -1381,7 +1429,8 @@ class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
                             replies=self.setting("quick_replies"),
                             save_replies=self.save_quick_replies,
                             show_cc=self.setting("compose_show_cc"),
-                            undo_seconds=int(self.setting("undo_send_seconds") or 0))
+                            undo_seconds=int(self.setting("undo_send_seconds") or 0),
+                            ai=self.ai_summary)
         dlg.ShowModal()
         result, outgoing, when, cc_shown = dlg.result, dlg.outgoing, dlg.when, dlg.cc_shown
         draft, typed = dlg.draft, dlg.fields()

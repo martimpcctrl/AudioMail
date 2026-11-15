@@ -40,7 +40,13 @@ Ordem do Tab:
 - Enter numa mensagem abre a leitura. O texto é um campo que você lê com as setas.
 - Os botões da leitura são: Responder, Responder a todos, Encaminhar, Pôr estrela, Arquivar, Apagar e Fechar. Esc também fecha.
 - Na leitura valem os mesmos atalhos da lista: Ctrl+R, Ctrl+Shift+R, Ctrl+Shift+F, Ctrl+S, Ctrl+E e Delete.
-- Quando a mensagem tem anexos aparece a lista Anexos, com os botões Abrir anexo, Salvar anexo e Salvar todos os anexos.
+- Quando a mensagem tem anexos aparece a lista Anexos, com os botões Ler anexo, Abrir anexo, Salvar anexo e Salvar todos os anexos.
+
+## Ler anexos e descrever imagens
+- Na leitura, escolha o anexo na lista Anexos e use Ler anexo (Ctrl+L). O texto abre numa janela para ler com as setas, sem abrir outro programa. O botão Copiar tudo copia o texto.
+- Dá para ler PDF, Word (.docx), Excel (.xlsx), PowerPoint (.pptx), LibreOffice (.odt, .ods, .odp), RTF, HTML, e-mails anexados (.eml) e arquivos de texto. Os arquivos antigos do Office (.doc, .xls, .ppt) e os PDFs escaneados (só imagem) não têm texto para ler.
+- Em fotos e imagens, Ler anexo pede à IA uma descrição: o que é, o que aparece e todo o texto escrito na imagem. Usa a mesma IA e a mesma chave do Resumo com IA, e pergunta antes de mandar a primeira imagem.
+- As imagens que vêm dentro do texto do e-mail (fotos coladas, banners) também aparecem na lista Anexos, como "imagem do e-mail 1".
 - Ctrl+R responde direto da lista, e Ctrl+Shift+R responde a todos.
 - Ctrl+Shift+F encaminha a mensagem, com os anexos, para outra pessoa.
 - Delete apaga (vai para a Lixeira). Ctrl+Z desfaz.
@@ -90,6 +96,14 @@ Ordem do Tab:
 - Ctrl+S salva como rascunho na pasta Rascunhos do Gmail. Se você cancelar uma mensagem alterada, o programa pergunta se quer salvar.
 - Para continuar um rascunho, abra a pasta Rascunhos e aperte Enter nele.
 - A assinatura automática se define em Configurações e entra sozinha nas mensagens novas e nas respostas.
+
+## Escrever com IA
+- Na escrita, Escrever com IA (Ctrl+Shift+I) pergunta o que você quer dizer, por exemplo "diz que aceito, mas só na sexta". A IA monta o texto e coloca no começo da mensagem para você revisar antes de enviar.
+- Numa resposta, a IA lê a mensagem original para entender o assunto e o tom. Se você já escreveu alguma coisa no corpo, isso vira a ideia e é trocado pelo texto da IA. Ctrl+Z no campo Mensagem desfaz.
+- Usa a IA configurada em Configurações, Resumo com IA, e pergunta antes da primeira vez.
+
+## Assinatura por conta
+- Ferramentas, Assinatura desta conta: uma assinatura só para a conta que está aberta (por exemplo, a do trabalho). Deixe vazio para essa conta usar a assinatura geral das Configurações.
 
 ## Contatos
 - O AudioMail aprende sozinho os endereços com quem você troca e-mails: quem manda mensagens para você, quem aparece nas mensagens que você abre e, principalmente, para quem você escreve. Na primeira vez de cada conta ele também lê os destinatários das mensagens enviadas.
@@ -156,11 +170,20 @@ Ordem do Tab:
 - Todas as contas avisam de mensagem nova, mesmo a que não está na tela. O aviso diz de qual conta veio.
 - Arquivo, Remover conta atual esquece a conta neste programa. As mensagens continuam no Gmail.
 
+## Boletim da caixa
+- Arquivo, Boletim da caixa (Ctrl+I), ou o menu do AudioMail na bandeja: o AudioMail fala quantas mensagens não lidas há em cada conta e de quem são, como "12 não lidas: 3 de Ana, 2 de Banco e mais 7 de outros remetentes". Também fala as abas do Gmail, os lembretes de hoje e as mensagens agendadas para hoje.
+
 ## Avisos, som e fala
 - O programa mantém uma conexão com o Gmail, e o próprio Gmail avisa quando chega mensagem. Assim o aviso vem em poucos segundos.
 - Cada mensagem nova pode gerar: notificação do Windows, um som e a fala pelo leitor de tela. Você liga e desliga cada um em Configurações.
 - Para trocar o som: Configurações, Preferências, Escolher som. Só aceita arquivos WAV. Se o seu som for MP3, converta para WAV antes.
 - Se a conexão cair, ele reconecta sozinho.
+
+## Notificação com botões
+- O aviso de mensagem nova do Windows tem os botões Responder, Arquivar e Marcar como lida. Quando chegam várias juntas, os botões são Marcar todas como lidas e Arquivar todas.
+- Os avisos ficam na Central de notificações do Windows (Windows+N), onde dá para chegar aos botões com Tab.
+- O menu do AudioMail na bandeja tem as mesmas ações para a última mensagem nova: Responder, Arquivar e Marcar como lida.
+- Para isso, o AudioMail cria um atalho chamado AudioMail no menu Iniciar. O Windows exige esse atalho para mostrar notificações com botões.
 
 ## Bandeja do Windows
 - Fechar a janela não encerra o programa: ele continua na bandeja e continua avisando.
@@ -221,6 +244,7 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 - Ctrl+B: marcadores do Gmail.
 - Ctrl+Shift+S: busca avançada.
 - Ctrl+Shift+M: carregar mais mensagens.
+- Ctrl+I: boletim da caixa.
 - F5: atualizar.
 - Ctrl+F: buscar.
 - F6: pastas.
@@ -233,8 +257,8 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 - Ctrl+P: preferências.
 - F1: abrir este manual.
 - Ctrl+Q: sair de verdade.
-- Na escrita: Ctrl+Enter envia, Ctrl+S salva o rascunho, Ctrl+K abre os contatos, Ctrl+Shift+C mostra ou esconde Cópia e Cópia oculta, Ctrl+Shift+P abre as respostas prontas.
-- Na leitura: Ctrl+Enter abre o link da linha; Ctrl+R, Ctrl+Shift+R, Ctrl+Shift+F, Ctrl+S, Ctrl+E e Delete fazem o mesmo que na lista.
+- Na escrita: Ctrl+Enter envia, Ctrl+S salva o rascunho, Ctrl+K abre os contatos, Ctrl+Shift+C mostra ou esconde Cópia e Cópia oculta, Ctrl+Shift+P abre as respostas prontas, Ctrl+Shift+I escreve com IA.
+- Na leitura: Ctrl+L lê o anexo escolhido; Ctrl+Enter abre o link da linha; Ctrl+R, Ctrl+Shift+R, Ctrl+Shift+F, Ctrl+S, Ctrl+E e Delete fazem o mesmo que na lista.
 
 ## Problemas comuns
 - Não consegui entrar: confira se é a senha de app e não a senha normal, e se a verificação em duas etapas está ligada. Se mudou a senha do Google, as senhas de app antigas deixam de valer: crie outra.

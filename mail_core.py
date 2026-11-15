@@ -334,6 +334,29 @@ def snippet_from_raw(header_bytes, text_bytes, limit=140):
     return text
 
 
+def inline_images(msg, known=()):
+    """Imagens que vêm dentro do corpo do e-mail (fotos coladas no texto,
+    banners), que não aparecem como anexo comum. Pequenas demais (ícones,
+    pixels de rastreio) ficam de fora."""
+    out, seen = [], {id(p) for p in known}
+    n = 0
+    for part in msg.walk():
+        if part.get_content_maintype() != "image" or id(part) in seen:
+            continue
+        try:
+            data = part_bytes(part)
+        except Exception:
+            continue
+        if len(data) < 3000:
+            continue
+        n += 1
+        name = part.get_filename() or (i18n.tr("imagem do e-mail %d") % n +
+                                       (mimetypes.guess_extension(part.get_content_type()) or ""))
+        out.append({"name": name, "size": len(data), "type": part.get_content_type(), "part": part,
+                    "inline": True})
+    return out
+
+
 def parse_full_message(raw_bytes, uid):
     msg = message_from_bytes(raw_bytes, policy=policy.default)
     body, links = "", []
@@ -360,6 +383,7 @@ def parse_full_message(raw_bytes, uid):
                                 "type": p.get_content_type(), "part": p})
     except Exception:
         pass
+    attachments += inline_images(msg, [a["part"] for a in attachments])
     return {
         "uid": uid,
         "from": _h(msg, "From"),
