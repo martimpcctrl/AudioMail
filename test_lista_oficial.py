@@ -201,6 +201,25 @@ def client(imap, gmail):
     return c
 
 
+class SegundaConexao(unittest.TestCase):
+    def test_trabalho_de_fundo_nao_divide_a_conexao_da_lista(self):
+        main = mc.MailClient("eu@gmail.com", "abcd efgh", "imap.gmail.com", 993, "smtp.gmail.com", 465)
+        main.imap, main.gmail, main.folders = object(), True, [{"raw": "INBOX", "flags": set()}]
+        side = main.side()
+        self.assertIs(main.side(), side)                 # uma só, reaproveitada
+        self.assertIsNone(side.imap)                     # conecta sozinha quando usada
+        self.assertIsNot(side.lock, main.lock)           # a lista nunca espera por ela
+        self.assertEqual((side.email, side.password, side.imap_host), ("eu@gmail.com", "abcdefgh", "imap.gmail.com"))
+        self.assertEqual(side.folders, main.folders)
+        self.assertIsNot(side.folders, main.folders)
+        closed = []
+        side.close = lambda: closed.append(1)
+        main.imap = None
+        main.close()
+        self.assertEqual(closed, [1])
+        self.assertIsNot(main.side(), side)              # reconectou: conexão nova
+
+
 class Servidor(unittest.TestCase):
     def test_total_e_limite(self):
         msgs, total = client(FakeIMAP(b"1 2 3 4 5"), False).fetch_headers("INBOX", limit=2, with_total=True)

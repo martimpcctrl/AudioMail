@@ -67,6 +67,7 @@ class Account:
         self.counting = False
         self.snippets = {}           # (pasta, uid) -> começo do texto
         self.loading_snippets = False
+        self.loading_more = False
 
 
 def _active(name, default):
@@ -206,6 +207,7 @@ class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
         self.scheduled = outbox.Scheduled(data_dir())
         self.pending_sends = []    # envios esperando o tempo de desfazer
         self.pending_moves = []    # mover/apagar esperando o tempo de desfazer
+        self.folder_timer = None   # espera parar numa pasta antes de carregar
         self.sending_scheduled = set()
 
         sounds.ensure_default(default_sound_path())
@@ -253,6 +255,7 @@ class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
         self.search_box.Bind(wx.EVT_KEY_DOWN, self.on_search_key)
         self.list.Bind(wx.EVT_LIST_ITEM_ACTIVATED, lambda e: self.open_selected())
         self.list.Bind(wx.EVT_KEY_DOWN, self.on_list_key)
+        self.list.Bind(wx.EVT_LIST_ITEM_FOCUSED, self.on_item_focused)
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
         self.Bind(wx.EVT_TIMER, self.on_reminder_timer, self.reminder_timer)
         self.Bind(wx.EVT_TIMER, self.on_update_timer, self.update_timer)
@@ -1084,10 +1087,19 @@ class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
         return False
 
     def on_folder(self, evt):
+        """Passar pelas pastas com as setas não carrega cada uma: a lista é
+        esvaziada na hora (nada de agir na pasta errada) e só carrega quando
+        você para numa pasta por um instante."""
         i = self.choice.GetSelection()
-        if i != wx.NOT_FOUND and self.active:
-            self.choose_folder(self.folders[i])
-            self.refresh()
+        if i == wx.NOT_FOUND or not self.active:
+            return
+        self.choose_folder(self.folders[i])
+        self.messages, self.view = [], []
+        self.list.DeleteAllItems()
+        self.SetStatusText("Carregando mensagens")
+        if self.folder_timer is not None and self.folder_timer.IsRunning():
+            self.folder_timer.Stop()
+        self.folder_timer = wx.CallLater(400, self.refresh)
 
     def do_search(self):
         if self.active:
@@ -1107,7 +1119,7 @@ class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
             return
         evt.Skip()
 
-    def refresh(self, after=None):
+    def refresh(self, after=None, failed=None):
         acc = self.active
         if not acc or not acc.client:
             return
@@ -1128,7 +1140,12 @@ class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
             if after:
                 after()
 
-        self.run(work, done, "Buscando" if query else "Carregando mensagens")
+        def error(err):
+            if failed:
+                failed()
+            i18n.message_box(str(err), "Erro", wx.OK | wx.ICON_ERROR, self)
+
+        self.run(work, done, "Buscando" if query else "Carregando mensagens", error)
 
     def show_messages(self, msgs, keep=False):
         acc = self.active

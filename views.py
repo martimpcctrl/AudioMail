@@ -119,19 +119,37 @@ class ViewsMixin:
             return
         evt.Skip()
 
+    def on_item_focused(self, evt):
+        """Chegou na última mensagem da lista: carrega as mais antigas sozinho,
+        como a rolagem infinita dos programas oficiais. (A lista do Windows nem
+        sempre avisa a seta para baixo na última linha, mas sempre avisa o foco.)"""
+        evt.Skip()
+        acc = self.active
+        if acc and self.view and evt.GetIndex() == len(self.view) - 1 and not acc.loading_more \
+                and can_load_more(len(self.messages), acc.total):
+            wx.CallAfter(self.load_more)
+
     def load_more(self):
         acc = self.active
-        if not acc or not acc.client:
+        if not acc or not acc.client or acc.loading_more:
             return
         if not can_load_more(len(self.messages), acc.total):
             self.announce(i18n.tr("Não há mais mensagens nesta pasta. São %d.") % len(self.messages))
             return
         before = len(self.messages)
         acc.limit = max(acc.limit, before) + PAGE
+        acc.loading_more = True
         self.announce("Carregando mais mensagens.")
-        self.refresh(after=lambda: self.announce(
-            i18n.tr("Mais %d mensagens carregadas. %d de %d.")
-            % (len(self.messages) - before, len(self.messages), acc.total)))
+
+        def after():
+            acc.loading_more = False
+            got = len(self.messages) - before
+            if got <= 0:
+                acc.total = len(self.messages)    # o servidor não tinha mais: não tenta de novo
+            self.announce(i18n.tr("Mais %d mensagens carregadas. %d de %d.")
+                          % (max(got, 0), len(self.messages), max(acc.total, len(self.messages))))
+
+        self.refresh(after=after, failed=lambda: setattr(acc, "loading_more", False))
 
     # ---------- não lidas ao lado das pastas ----------
     def update_folder_labels(self, acc):
@@ -148,7 +166,7 @@ class ViewsMixin:
         if not force and time.time() - acc.counts_at < COUNTS_EVERY:
             return
         acc.counting, acc.counts_at = True, time.time()
-        client, folders = acc.client, list(acc.folders)
+        client, folders = acc.client.side(), list(acc.folders)
 
         def work():
             try:
@@ -189,11 +207,11 @@ class ViewsMixin:
         if not self.preview_on() or not acc or not acc.client or acc.loading_snippets:
             return
         raw = acc.current_raw
-        missing = [m["uid"] for m in self.messages if (raw, m["uid"]) not in acc.snippets][:PAGE]
+        missing = [m["uid"] for m in self.messages if (raw, m["uid"]) not in acc.snippets][:50]
         if not missing:
             return
         acc.loading_snippets = True
-        client = acc.client
+        client = acc.client.side()
 
         def work():
             found = client.snippets(raw, missing)

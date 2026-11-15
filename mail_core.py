@@ -640,6 +640,9 @@ class MailClient:
             self.selected = None
 
     def close(self):
+        side, self._side = getattr(self, "_side", None), None
+        if side is not None:
+            side.close()
         with self.lock:
             try:
                 if self.imap:
@@ -647,6 +650,18 @@ class MailClient:
             except Exception:
                 pass
             self.imap = None
+
+    def side(self):
+        """Uma segunda conexão, só para o trabalho de fundo (prévia e contagem das
+        pastas), para que ele nunca faça a lista esperar. Conecta quando usada."""
+        if getattr(self, "_side", None) is None:
+            other = MailClient.__new__(MailClient)
+            other.__dict__.update({k: v for k, v in self.__dict__.items()
+                                   if k not in ("imap", "selected", "lock", "_side")})
+            other.imap, other.selected, other.lock, other._side = None, None, threading.RLock(), None
+            other.folders = list(self.folders)
+            self._side = other
+        return self._side
 
     def _ensure(self):
         try:
@@ -740,7 +755,7 @@ class MailClient:
         finally:
             self.imap.literal = None
 
-    def snippets(self, folder_raw, uids, size=4096):
+    def snippets(self, folder_raw, uids, size=2048):
         """{uid: começo do texto} para a prévia da lista. Nunca levanta erro."""
         if not uids:
             return {}
