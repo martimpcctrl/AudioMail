@@ -1,0 +1,121 @@
+AudioMail - cliente de Gmail acessível
+
+INSTALAR E ABRIR (PowerShell, dentro da pasta)
+  pip install -r requirements.txt
+  python audiomail.py
+O accessible-output2 é o que permite falar pelo NVDA. Se ele não instalar, o AudioMail
+funciona normalmente, só sem a fala.
+
+COMPILAR O APLICATIVO PORTÁTIL (no Windows)
+  Dê dois cliques em  compilar.bat  (ou rode  python compilar.py).
+  Ele instala o que falta (inclusive o PyInstaller), compila e monta a pasta portátil. Leva alguns
+  minutos. O resultado fica em  saida_portatil\ :
+    AudioMail-Portatil\            a pasta portátil: AudioMail.exe, MANUAL.html, MANUAL.txt,
+                                   portable.flag e a pasta dados
+    AudioMail-Portatil-X.Y.Z.zip   a mesma pasta compactada, para distribuir
+    AudioMail.exe                  só o executável, para enviar no painel de versões
+  Portátil: com o arquivo portable.flag ao lado do AudioMail.exe, a configuração fica na pasta
+  dados, junto do programa (pode ir num pendrive). Sem esse arquivo, usa o perfil do Windows.
+  O manual também abre dentro do programa: Ajuda, Abrir manual (F1). Para mudar o manual, edite
+  o manual_fonte.txt e compile de novo.
+
+LANÇAR UMA VERSÃO NOVA (só o executável, sem enviar o código)
+  1. python empacotar.py --so-versao     (soma 1 à versão em version.py; não gera zip do código)
+  2. compilar.bat                        (compila o .exe e gera a pasta portátil)
+  3. No painel, preencha Versão, Novidades, Tipo e Obrigatória e escolha, no campo
+     "Pacote do executável", o arquivo  saida_portatil\AudioMail-X.Y.Z-exe.zip
+     Deixe o campo "Pacote do código" vazio.
+  O zip do executável leva um version.txt dentro; o painel confere se o número bate com o que você
+  digitou (se não bater, recusa, senão o programa pediria atualização para sempre).
+  Para a página do projeto use o saida_portatil\AudioMail-Portatil-X.Y.Z.zip (esse NÃO vai no painel).
+  Quem roda o programa pelo Python (não é o seu caso) só recebe atualização se você também enviar
+  o zip do código (python empacotar.py, sem --so-versao).
+
+CONTA (somente Gmail)
+  1. Ative a verificação em duas etapas na conta Google.
+  2. Crie uma senha de app em myaccount.google.com/apppasswords.
+  3. Na tela de entrada, use o e-mail e essa senha de app (não a senha normal).
+  Contas Google Workspace também funcionam. A senha fica criptografada pelo Windows.
+
+VÁRIAS CONTAS
+  Arquivo, Adicionar conta. Com mais de uma conta aparece o campo Conta (F7).
+  Todas as contas recebem aviso de mensagem nova, mesmo as que não estão na tela.
+  Arquivo, Remover conta atual esquece a conta (as mensagens continuam no Gmail).
+
+TRADUTOR
+  Ctrl+T abre a mensagem já traduzida (ou use o botão Traduzir na leitura). Na escrita, o botão
+  Traduzir texto traduz o assunto e o texto para o idioma escolhido, e Desfazer tradução volta.
+  O idioma de destino das mensagens se escolhe em Configurações (padrão: Português).
+  Usa o serviço de tradução do Google, sem chave. Só envia texto quando você pede, e na primeira
+  vez o programa pede autorização. É um serviço não oficial do Google: se ele mudar ou limitar o
+  uso, a tradução pode falhar (o código fica em translator.py).
+
+TELA PRINCIPAL (ordem do Tab)
+  Conta (só com mais de uma), Pasta, Buscar, Mensagens.
+
+BUSCA
+  Ctrl+F vai para o campo Buscar. Digite e aperte Enter: procura no remetente, assunto e texto,
+  na pasta atual, e aceita acentos. Esc limpa a busca e volta para a lista.
+
+CONVERSAS
+  Ctrl+G agrupa as mensagens por conversa (usa as conversas do próprio Gmail).
+  Enter numa conversa abre todas as mensagens juntas, da mais antiga para a mais nova.
+
+ANEXOS
+  Ao ler: lista Anexos e botões Abrir anexo, Salvar anexo e Salvar todos os anexos.
+  Ao escrever: Adicionar anexo e Remover anexo. Limite do Gmail: cerca de 18 MB no total.
+
+RASCUNHOS E ASSINATURA
+  Ctrl+S na escrita salva o rascunho na pasta Rascunhos do Gmail. Ao cancelar uma mensagem
+  alterada, o programa pergunta se quer salvar. Enter num rascunho abre para continuar editando.
+  A assinatura automática se define em Configurações.
+
+CÓPIA OCULTA
+  Campo Cópia oculta na escrita (fica depois de Cópia).
+
+FALA, NOTIFICAÇÃO E SOM
+  Mensagem nova gera notificação, som e fala pelo leitor de tela (cada um liga ou desliga em
+  Configurações). Som personalizado: somente arquivos WAV.
+
+TEMPO REAL E BANDEJA
+  Conexão IMAP IDLE: o Gmail avisa na hora. Fechar a janela deixa o programa na bandeja
+  (Windows+B, ícone, Enter abre; tecla Aplicativos abre o menu). Ctrl+Q encerra de verdade.
+
+CONFIGURAÇÕES
+  Alt, Configurações, Preferências (ou Ctrl+P).
+
+ATALHOS
+  Enter abre. Ctrl+N nova. Ctrl+R responde. Ctrl+Shift+R responde a todos. Delete apaga.
+  F5 atualiza. F6 pastas. F7 contas. Ctrl+F busca. Ctrl+G conversas. Ctrl+M esconde na bandeja.
+  Ctrl+Shift+L marca como lida. Ctrl+Shift+U marca como não lida.
+  Na escrita: Ctrl+Enter envia, Ctrl+S salva rascunho.
+
+ATUALIZAÇÕES AUTOMÁTICAS
+  O AudioMail olha https://martimtech.ddns.net/audiomail/version.json 5 segundos depois de abrir
+  e depois a cada 6 horas. Também dá para conferir na hora em Ajuda, Verificar atualizações.
+  Antes de instalar, o programa confere o SHA-256 do pacote; se não bater, não instala.
+  A versão antiga fica guardada na pasta _backup. Dá para desligar o automático em Configurações.
+
+  O que o usuário vê depende do tipo escolhido no painel:
+    Só novidades: aviso discreto; se o programa estiver escondido, só notificação (sem fala).
+                  O usuário pode atualizar, deixar para depois ou pular a versão.
+    Importante:   notificação e fala; a janela abre quando o usuário abrir o programa.
+    Urgente:      a janela abre na hora, mesmo escondido na bandeja, e não dá para pular.
+    Obrigatória:  (marcação separada) quem estiver numa versão abaixo dela só tem duas opções:
+                  Atualizar agora ou Fechar o AudioMail. Se a atualização falhar, a janela volta.
+
+COMO PUBLICAR UMA VERSÃO NOVA
+  Veja "Lançar uma versão nova" acima. No painel (https://martimtech.ddns.net/audiomail/painel/)
+  basta enviar o zip do executável. O zip do código é opcional.
+  A atualização do executável troca só o AudioMail.exe; o manual da pasta portátil não muda, mas
+  o programa gera o manual atualizado sozinho em Ajuda, Abrir manual (F1).
+
+TESTES (opcional)
+  python test_core.py
+  python test_idle.py
+  python test_search_wire.py
+  python test_updater.py
+  python test_empacotar.py
+  python test_translator.py
+  python test_manual.py
+  python test_compilar.py

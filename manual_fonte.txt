@@ -1,0 +1,151 @@
+# Manual do AudioMail {{versao}}
+
+## O que é o AudioMail
+O AudioMail é um programa para ler e escrever e-mails do Gmail, feito para ser usado só com o teclado e com leitor de tela como o NVDA. Ele avisa na hora quando chega mensagem, fica na bandeja do Windows e se atualiza sozinho.
+
+## Primeiros passos
+- Abra o AudioMail.exe. Não precisa instalar nada.
+- Na primeira vez aparece a tela de entrada com os campos E-mail e Senha de app.
+- A senha de app não é a senha normal do Gmail. É uma senha de 16 letras que o Google cria só para este programa.
+- Para criar: na tela de entrada, use o botão "Criar senha de app (abre o site do Google)". Ele abre https://myaccount.google.com/apppasswords no seu navegador.
+- Entre na sua conta Google, dê um nome como AudioMail, e o Google mostra a senha. Copie com Ctrl+C e cole no campo Senha de app. Pode colar com os espaços.
+- Se a página de senhas de app não aparecer, ative antes a verificação em duas etapas em https://myaccount.google.com/security e tente de novo. Contas de escola ou trabalho podem ter essa opção bloqueada pelo administrador.
+- Deixe marcada a caixa "Lembrar a senha neste computador" para o programa entrar sozinho nas próximas vezes.
+
+## A tela principal
+Ordem do Tab:
+1. Conta (só aparece se você tiver mais de uma conta).
+2. Pasta: Caixa de entrada, Rascunhos, Enviados, Lixeira e as outras do Gmail.
+3. Buscar.
+4. Mensagens: a lista. Cada linha diz o estado (Não lida), quem enviou, o assunto e a data.
+- F6 vai direto para as pastas, F7 para as contas, Ctrl+F para a busca.
+- A barra de status, no rodapé, diz quantas mensagens e quantas não lidas.
+
+## Ler e responder
+- Enter numa mensagem abre a leitura. O texto é um campo que você lê com as setas.
+- Os botões da leitura são: Responder, Responder a todos e Fechar. Esc também fecha.
+- Quando a mensagem tem anexos aparece a lista Anexos, com os botões Abrir anexo, Salvar anexo e Salvar todos os anexos.
+- Ctrl+R responde direto da lista, e Ctrl+Shift+R responde a todos.
+- Delete apaga (pede confirmação e manda para a Lixeira).
+- Ctrl+Shift+L marca como lida e Ctrl+Shift+U marca como não lida.
+
+## Escrever uma mensagem
+- Ctrl+N abre uma mensagem nova.
+- Ordem dos campos: Para, Cópia, Cópia oculta, Assunto, Texto da mensagem, Anexos e os botões Adicionar anexo, Remover anexo, Enviar, Salvar rascunho e Cancelar.
+- Para vários destinatários, separe os endereços com vírgula ou ponto e vírgula.
+- Ctrl+Enter envia de qualquer campo.
+- Anexos: o Gmail aceita cerca de 18 MB no total por mensagem.
+- Ctrl+S salva como rascunho na pasta Rascunhos do Gmail. Se você cancelar uma mensagem alterada, o programa pergunta se quer salvar.
+- Para continuar um rascunho, abra a pasta Rascunhos e aperte Enter nele.
+- A assinatura automática se define em Configurações e entra sozinha nas mensagens novas e nas respostas.
+
+## Traduzir
+- Ctrl+T abre a mensagem já traduzindo. Ou abra a mensagem e aperte o botão Traduzir.
+- A tradução aparece no mesmo campo de leitura, com uma linha no começo dizendo de qual idioma para qual. O botão passa a ser Ver original e depois Ver tradução.
+- Os cabeçalhos (De, Para, Assunto, Data) não são traduzidos, só o texto. Numa conversa, cada mensagem é traduzida.
+- Se a mensagem já estiver no seu idioma, o programa avisa e não muda nada.
+- Para escrever em outro idioma: escreva em português e aperte o botão Traduzir texto. Escolha o idioma na lista. O assunto e o texto são traduzidos. Desfazer tradução devolve o que você escreveu.
+- O idioma para o qual as mensagens são traduzidas se escolhe em Configurações (o padrão é Português).
+- Na primeira vez o programa pergunta se pode enviar o texto ao serviço de tradução do Google. Se você disser Sim, ele não pergunta mais. Dá para mudar isso em Configurações.
+- A tradução é automática e pode errar: confira antes de usar em algo importante. Em mensagens longas demora um pouco. Se o serviço limitar o uso, espere alguns minutos.
+
+## Resumir com IA
+- Abra uma mensagem e escolha Resumir com IA. Na primeira vez, o AudioMail pede autorização antes de enviar o texto ao provedor.
+- Em Configurações, Resumo com IA, escolha OpenAI, Gemini ou outro serviço compatível com a API OpenAI. Informe o modelo e sua própria chave de API. Para outro serviço, informe também o endereço base.
+- A chave fica protegida pela criptografia do Windows neste computador. A API pode gerar cobrança na conta do provedor; a assinatura do ChatGPT não inclui automaticamente o uso da API.
+- O resumo inclui o texto e os cabeçalhos das mensagens da conversa. Anexos não são enviados.
+
+## Buscar
+- Ctrl+F vai para o campo Buscar. Digite e aperte Enter.
+- A busca olha o remetente, o assunto e o texto, na pasta que estiver aberta, e aceita acentos.
+- Esc limpa a busca e volta para a lista completa.
+
+## Conversas
+- Ctrl+G liga e desliga o agrupamento por conversa, igual ao Gmail. Vem desligado.
+- Com ele ligado, cada linha é uma conversa, e o assunto mostra quantas mensagens ela tem.
+- Enter numa conversa abre todas as mensagens juntas, da mais antiga para a mais nova.
+
+## Várias contas
+- Arquivo, Adicionar conta, para entrar com outro Gmail.
+- Com mais de uma conta aparece o campo Conta, que você acessa com F7.
+- Todas as contas avisam de mensagem nova, mesmo a que não está na tela. O aviso diz de qual conta veio.
+- Arquivo, Remover conta atual esquece a conta neste programa. As mensagens continuam no Gmail.
+
+## Avisos, som e fala
+- O programa mantém uma conexão com o Gmail, e o próprio Gmail avisa quando chega mensagem. Assim o aviso vem em poucos segundos.
+- Cada mensagem nova pode gerar: notificação do Windows, um som e a fala pelo leitor de tela. Você liga e desliga cada um em Configurações.
+- Para trocar o som: Configurações, Preferências, Escolher som. Só aceita arquivos WAV. Se o seu som for MP3, converta para WAV antes.
+- Se a conexão cair, ele reconecta sozinho.
+
+## Bandeja do Windows
+- Fechar a janela não encerra o programa: ele continua na bandeja e continua avisando.
+- Para abrir de novo: aperte Windows mais B, escolha o ícone do AudioMail e aperte Enter. A tecla Aplicativos no ícone abre o menu com Abrir, Verificar agora, Configurações e Sair.
+- Ctrl+M esconde na bandeja. Ctrl+Q encerra de verdade.
+
+## Calendário de lembretes
+- Abra Ferramentas, Calendário. A tabela mostra todos os dias do mês e destaca os lembretes e feriados nacionais nas datas correspondentes.
+- Use as setas para percorrer os lembretes. Ctrl+seta para esquerda/direita muda o mês; Ctrl+seta para cima/baixo muda o ano.
+- Use Adicionar lembrete ou Apagar lembrete. Os lembretes ficam salvos somente neste computador, sem integração com o Google.
+- O calendário também busca feriados nacionais do Brasil numa API pública, sem chave. Guarda uma cópia local para mostrar os feriados quando estiver sem conexão.
+- Cada lembrete tem título, data e hora. Na hora marcada, o AudioMail mostra uma notificação e avisa pelo leitor de tela.
+- Os lembretes ficam salvos somente neste computador. Não há integração nem sincronização com o Google.
+- O AudioMail precisa estar aberto (pode ficar na bandeja) para avisar na hora marcada.
+
+## Configurações
+Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mudar:
+- o idioma da interface (aplicado ao reiniciar), o idioma para o qual as mensagens são traduzidas e a autorização da tradução;
+- de quanto em quanto tempo ele confere a caixa de entrada como reserva;
+- receber na hora (tempo real);
+- notificação, som e fala;
+- manter na bandeja ao fechar e ao minimizar;
+- abrir já escondido e iniciar com o Windows;
+- verificar atualizações automaticamente;
+- o som de notificação e a assinatura.
+
+## Atualizações
+- O programa confere sozinho se há versão nova, ao abrir e a cada 6 horas. Para conferir na hora: Ajuda, Verificar atualizações.
+- Só novidades: aviso discreto. Você atualiza quando quiser ou pula a versão.
+- Importante: o programa avisa e fala, e você decide quando atualizar.
+- Urgente: a janela abre na hora, mesmo escondido, e não dá para pular.
+- Obrigatória: a versão antiga não funciona mais. Só dá para Atualizar agora ou Fechar o AudioMail.
+- Antes de instalar, o programa confere se o arquivo baixado está íntegro. Depois reinicia sozinho.
+
+## Modo portátil
+- Esta pasta é portátil: pode ficar em um pendrive ou em qualquer lugar. Os dados do programa ficam na subpasta dados, ao lado do AudioMail.exe, e não no perfil do Windows.
+- Para levar para outro computador, copie a pasta inteira.
+- A senha lembrada é protegida pelo Windows e só abre no mesmo usuário e no mesmo computador. Em outro computador o programa pede a senha de app de novo, uma vez.
+- O arquivo portable.flag é o que liga o modo portátil. Se você apagar esse arquivo, o programa passa a guardar os dados no perfil do Windows.
+
+## Todos os atalhos
+- Enter: abrir.
+- Ctrl+T: traduzir a mensagem.
+- Ctrl+N: nova mensagem.
+- Ctrl+R: responder.
+- Ctrl+Shift+R: responder a todos.
+- Delete: apagar.
+- F5: atualizar.
+- Ctrl+F: buscar.
+- F6: pastas.
+- F7: contas.
+- Ctrl+G: agrupar por conversa.
+- Ctrl+Shift+L: marcar como lida.
+- Ctrl+Shift+U: marcar como não lida.
+- Ctrl+M: esconder na bandeja.
+- Ctrl+P: preferências.
+- F1: abrir este manual.
+- Ctrl+Q: sair de verdade.
+- Na escrita: Ctrl+Enter envia e Ctrl+S salva o rascunho.
+
+## Problemas comuns
+- Não consegui entrar: confira se é a senha de app e não a senha normal, e se a verificação em duas etapas está ligada. Se mudou a senha do Google, as senhas de app antigas deixam de valer: crie outra.
+- Não aparece notificação: veja em Configurações se a notificação está ligada, e se o Windows não está no modo Não incomodar ou Assistente de foco.
+- O leitor de tela não fala as mensagens novas: veja em Configurações se a opção de falar está marcada e se o NVDA está aberto.
+- O antivírus reclamou do AudioMail.exe: programas feitos com PyInstaller às vezes são marcados por engano. Adicione a pasta do AudioMail às exceções do antivírus.
+- O programa demora alguns segundos para abrir: é normal, ele se descompacta ao abrir.
+- A janela sumiu: ele está na bandeja. Aperte Windows mais B.
+
+## Privacidade
+- A senha de app fica guardada só no seu computador, criptografada pelo Windows.
+- O AudioMail se conecta ao Gmail e ao servidor de atualizações em https://martimtech.ddns.net/.
+- Só quando você manda traduzir, ele envia o texto que você mandou traduzir ao serviço de tradução do Google, e antes pede a sua autorização.
+- Fora a tradução, as suas mensagens não passam por nenhum outro servidor.

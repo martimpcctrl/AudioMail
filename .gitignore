@@ -1,0 +1,20 @@
+# Pacotes e executáveis: vão para as Releases do GitHub, não para o código
+saida_portatil/
+dist_update/
+build/
+dist/
+*.zip
+*.exe
+*.part
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Dados locais
+_backup/
+
+# Arquivos temporários do PyInstaller (têm caminhos deste computador)
+build_portatil/
