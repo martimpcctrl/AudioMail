@@ -8,13 +8,13 @@ import i18n
 
 # Altere este identificador sempre que o texto legal mudar. Usuarios existentes
 # que ainda nao o aceitaram voltarao a ver a tela obrigatoria.
-LEGAL_VERSION = "2026-11-05-1"
+LEGAL_VERSION = "2026-11-15-1"
 CONTACT_EMAIL = "martimpc318@gmail.com"
 
 DOCUMENTS = {
     "pt": {
         "privacy": ("Política de privacidade", """POLÍTICA DE PRIVACIDADE DO AUDIOMAIL
-Versão 1 — 5 de novembro de 2026
+Versão 2 — 15 de novembro de 2026
 
 1. Quem responde e como falar
 Martim Alves é o responsável pelo AudioMail. Para exercer direitos sobre dados ou fazer perguntas de privacidade, escreva para martimpc318@gmail.com. Também é possível abrir um chamado em Ajuda > Abrir chamado de suporte.
@@ -26,7 +26,7 @@ Martim Alves é o responsável pelo AudioMail. Para exercer direitos sobre dados
 • Se você pedir um resumo com IA, o conteúdo da mensagem ou conversa escolhido e as instruções do resumo são enviados ao provedor selecionado (OpenAI, Google Gemini ou endpoint compatível que você configurar), com a chave de API que você forneceu. O provedor trata os dados conforme seus próprios termos e políticas; não informe conteúdo que não queira compartilhar com esse provedor. A chave fica cifrada localmente. O recurso só envia conteúdo quando você pede e confirma autorização.
 • Se você pedir tradução, o texto selecionado é enviado ao serviço Google Translate. A autorização é solicitada antes do primeiro envio e pode ser alterada nas configurações.
 • O calendário pode consultar feriados nacionais na API pública Nager.Date. Os resultados são guardados em cache local; a consulta transmite o ano solicitado e dados técnicos da conexão ao serviço.
-• A verificação de atualizações acessa o site martimtech.ddns.net para consultar versões e, quando você instala, baixar arquivos. Essa comunicação inclui os dados técnicos usuais de uma conexão web.
+• A verificação de atualizações acessa o GitHub (github.com, serviço da GitHub, Inc., empresa da Microsoft), onde o AudioMail é publicado, para consultar versões e, quando você instala, baixar arquivos. Essa comunicação inclui os dados técnicos usuais de uma conexão web.
 
 3. Finalidades e bases
 Os dados locais são usados para executar as funções escolhidas e guardar suas preferências. O conteúdo enviado por você a tradutores, provedores de IA, provedor de e-mail ou suporte é tratado para realizar a função solicitada, com as permissões e instruções que você fornece. O aceite desta política e dos termos registra sua decisão de usar o aplicativo; ele não substitui as autorizações específicas para tradução e resumo com IA.
@@ -67,7 +67,7 @@ Aplicam-se as leis da República Federativa do Brasil, preservadas as regras obr
     },
     "en": {
         "privacy": ("Privacy policy", """AUDIOMAIL PRIVACY POLICY
-Version 1 — November 5, 2026
+Version 2 — November 15, 2026
 
 1. Who is responsible and how to contact us
 Martim Alves is responsible for AudioMail. For privacy questions or requests about personal data, email martimpc318@gmail.com. You can also open a ticket at Help > Open support ticket.
@@ -79,7 +79,7 @@ Martim Alves is responsible for AudioMail. For privacy questions or requests abo
 • When you request an AI summary, the selected message or conversation and summary instructions are sent to your chosen provider (OpenAI, Google Gemini or a compatible endpoint you configure), using your API key. The provider processes data under its own terms and policies. Do not submit content you do not wish to share with that provider. The key is encrypted locally. Content is sent only when you request a summary and authorize it.
 • When you request translation, the selected text is sent to Google Translate. Permission is requested before the first transmission and can be changed in settings.
 • The calendar may query national holidays from the public Nager.Date API. Results are cached locally; the requested year and technical connection data are sent to that service.
-• Update checks contact martimtech.ddns.net for version information and, when you install an update, download files. This web connection includes ordinary technical connection data.
+• Update checks contact GitHub (github.com, a service of GitHub, Inc., a Microsoft company), where AudioMail is published, for version information and, when you install an update, download files. This web connection includes ordinary technical connection data.
 
 3. Purposes and legal grounds
 Local data is used to run requested features and save preferences. Data you send to translators, AI providers, your email provider or support is processed to carry out the function you request, based on your permissions and instructions. Accepting this policy and the terms records your choice to use the app; it does not replace the separate permissions for translation and AI summaries.
@@ -120,7 +120,7 @@ The laws of the Federative Republic of Brazil apply, while mandatory consumer an
     },
     "es": {
         "privacy": ("Política de privacidad", """POLÍTICA DE PRIVACIDAD DE AUDIOMAIL
-Versión 1 — 5 de noviembre de 2026
+Versión 2 — 15 de noviembre de 2026
 
 1. Responsable y contacto
 Martim Alves es responsable de AudioMail. Para consultas de privacidad o solicitudes sobre datos personales, escribe a martimpc318@gmail.com. También puedes abrir una solicitud en Ayuda > Abrir solicitud de soporte.
@@ -132,7 +132,7 @@ Martim Alves es responsable de AudioMail. Para consultas de privacidad o solicit
 • Al pedir un resumen con IA, el mensaje o conversación seleccionados y las instrucciones se envían al proveedor elegido (OpenAI, Google Gemini o un endpoint compatible que configures), usando tu clave API. El proveedor trata los datos según sus propios términos y políticas. No envíes contenido que no quieras compartir con ese proveedor. La clave se cifra localmente. El contenido solo se envía cuando pides el resumen y lo autorizas.
 • Al pedir una traducción, el texto seleccionado se envía a Google Translate. Se solicita permiso antes del primer envío y puedes cambiarlo en la configuración.
 • El calendario puede consultar los feriados nacionales en la API pública Nager.Date. Los resultados se guardan localmente; se envían el año solicitado y datos técnicos de conexión.
-• La búsqueda de actualizaciones contacta martimtech.ddns.net para consultar versiones y, cuando instalas una actualización, descargar archivos. Esta conexión incluye datos técnicos habituales de una conexión web.
+• La búsqueda de actualizaciones contacta GitHub (github.com, un servicio de GitHub, Inc., empresa de Microsoft), donde se publica AudioMail, para consultar versiones y, cuando instalas una actualización, descargar archivos. Esta conexión incluye datos técnicos habituales de una conexión web.
 
 3. Finalidades y bases legales
 Los datos locales se usan para ejecutar las funciones solicitadas y guardar preferencias. Los datos que envías a traductores, proveedores de IA, correo o soporte se tratan para realizar la función solicitada, según tus permisos e instrucciones. Aceptar esta política y los términos registra tu decisión de usar la aplicación; no sustituye los permisos específicos para traducción y resumen con IA.

@@ -146,6 +146,6 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 
 ## Privacidade
 - A senha de app fica guardada só no seu computador, criptografada pelo Windows.
-- O AudioMail se conecta ao Gmail e ao servidor de atualizações em https://martimtech.ddns.net/.
+- O AudioMail se conecta ao Gmail e às atualizações no GitHub (github.com/martimpcctrl/AudioMail).
 - Só quando você manda traduzir, ele envia o texto que você mandou traduzir ao serviço de tradução do Google, e antes pede a sua autorização.
 - Fora a tradução, as suas mensagens não passam por nenhum outro servidor.

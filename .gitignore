@@ -18,3 +18,4 @@ _backup/
 
 # Arquivos temporários do PyInstaller (têm caminhos deste computador)
 build_portatil/
+release/

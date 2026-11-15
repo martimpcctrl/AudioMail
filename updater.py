@@ -1,9 +1,13 @@
 """Atualizador do AudioMail: confere, baixa, verifica e instala novas versoes.
 
-Servidor: https://martimtech.ddns.net/audiomail/
+Desde a 1.0.9 as versoes saem nas Releases do GitHub (martimpcctrl/AudioMail).
+Cada release traz:
   version.json                      (informa a versao mais nova e os pacotes)
   AudioMail-X.Y.Z-source.zip        (arquivos .py, para quem roda com Python)
   AudioMail-X.Y.Z-exe.zip           (AudioMail.exe, para quem usa o executavel)
+O version.json e lido da release mais recente (releases/latest/download/) e os
+pacotes so sao aceitos se vierem das releases deste repositorio. O arquivo e
+gerado por gerar_version_json.py.
 """
 import hashlib
 import json
@@ -21,7 +25,12 @@ from urllib.parse import urlparse
 
 from version import APP_VERSION
 
-BASE_URL = "https://martimtech.ddns.net/audiomail/"
+REPO = "martimpcctrl/AudioMail"
+BASE_URL = "https://github.com/%s/releases/latest/download/" % REPO
+#: Os pacotes so podem vir das releases deste repositorio (nao de qualquer
+#: endereco do github.com). O GitHub redireciona o download para um servidor
+#: dele (HTTPS); o SHA-256 do version.json confere o arquivo de qualquer jeito.
+PACKAGE_PREFIX = "https://github.com/%s/releases/download/" % REPO
 MANIFEST_NAME = "version.json"
 MAX_DOWNLOAD = 150 * 1024 * 1024
 MAX_FILE = 30 * 1024 * 1024
@@ -65,7 +74,11 @@ def _open(url, timeout, require_https):
 
 def _check_url(url, base_url, require_https):
     u, b = urlparse(url), urlparse(base_url)
-    if u.netloc != b.netloc or (require_https and u.scheme != "https"):
+    outside = u.netloc != b.netloc or (require_https and u.scheme != "https")
+    if base_url == BASE_URL:
+        clean = posixpath.normpath(u.path) == u.path and not (u.query or u.fragment)
+        outside = outside or not url.startswith(PACKAGE_PREFIX) or not clean
+    if outside:
         raise UpdateError("Endereço de pacote fora do servidor oficial: %s" % url)
 
 

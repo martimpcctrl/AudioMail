@@ -19,7 +19,8 @@ COMPILAR O APLICATIVO PORTÁTIL (no Windows)
   O manual também abre dentro do programa: Ajuda, Abrir manual (F1). Para mudar o manual, edite
   o manual_fonte.txt e compile de novo.
 
-LANÇAR UMA VERSÃO NOVA (só o executável, sem enviar o código)
+LANÇAR UMA VERSÃO PELO PAINEL DO SITE (até a 1.0.9; da 1.0.10 em diante, veja
+"COMO PUBLICAR UMA VERSÃO NOVA (GITHUB, DESDE A 1.0.9)" mais abaixo)
   1. python empacotar.py --so-versao     (soma 1 à versão em version.py; não gera zip do código)
   2. compilar.bat                        (compila o .exe e gera a pasta portátil)
   3. No painel, preencha Versão, Novidades, Tipo e Obrigatória e escolha, no campo
@@ -91,12 +92,12 @@ ATALHOS
   Na escrita: Ctrl+Enter envia, Ctrl+S salva rascunho.
 
 ATUALIZAÇÕES AUTOMÁTICAS
-  O AudioMail olha https://martimtech.ddns.net/audiomail/version.json 5 segundos depois de abrir
+  O AudioMail olha o version.json da última Release no GitHub 5 segundos depois de abrir
   e depois a cada 6 horas. Também dá para conferir na hora em Ajuda, Verificar atualizações.
   Antes de instalar, o programa confere o SHA-256 do pacote; se não bater, não instala.
   A versão antiga fica guardada na pasta _backup. Dá para desligar o automático em Configurações.
 
-  O que o usuário vê depende do tipo escolhido no painel:
+  O que o usuário vê depende do tipo escrito no version.json (opção --tipo do gerar_version_json.py):
     Só novidades: aviso discreto; se o programa estiver escondido, só notificação (sem fala).
                   O usuário pode atualizar, deixar para depois ou pular a versão.
     Importante:   notificação e fala; a janela abre quando o usuário abrir o programa.
@@ -104,17 +105,29 @@ ATUALIZAÇÕES AUTOMÁTICAS
     Obrigatória:  (marcação separada) quem estiver numa versão abaixo dela só tem duas opções:
                   Atualizar agora ou Fechar o AudioMail. Se a atualização falhar, a janela volta.
 
-COMO PUBLICAR UMA VERSÃO NOVA
-  Veja "Lançar uma versão nova" acima. No painel (https://martimtech.ddns.net/audiomail/painel/)
-  basta enviar o zip do executável. O zip do código é opcional.
+COMO PUBLICAR UMA VERSÃO NOVA (GITHUB, DESDE A 1.0.9)
+  1. Mude o número em version.py e gere os pacotes (compilar.bat; empacotar.py é opcional).
+  2. python gerar_version_json.py 1.0.10 --tipo importante --notas "O que mudou"
+     (use --obrigatoria ou --min-versao 1.0.9 para atualização obrigatória).
+     Isso cria a pasta release.0.10 com os zips e o version.json.
+  3. Crie a Release v1.0.10 em github.com/martimpcctrl/AudioMail e anexe TODOS os arquivos
+     dessa pasta, inclusive o version.json:
+       gh release create v1.0.10 release/1.0.10/* --title "AudioMail 1.0.10" --notes "O que mudou"
+  O atualizador lê o version.json da Release mais recente e só aceita pacotes das Releases
+  deste repositório, conferidos pelo SHA-256.
   A atualização do executável troca só o AudioMail.exe; o manual da pasta portátil não muda, mas
   o programa gera o manual atualizado sozinho em Ajuda, Abrir manual (F1).
+
+  Quem ainda tem a 1.0.8 ou anterior procura no site antigo: por isso a 1.0.9 foi publicada lá
+  (painel em martimtech.ddns.net). Mantenha o site no ar por alguns meses. Os chamados de
+  suporte continuam indo para o painel do site.
 
 TESTES (opcional)
   python test_core.py
   python test_idle.py
   python test_search_wire.py
   python test_updater.py
+  python test_github_update.py
   python test_empacotar.py
   python test_translator.py
   python test_manual.py
