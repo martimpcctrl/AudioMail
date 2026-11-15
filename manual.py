@@ -130,7 +130,28 @@ Tab moves through Account (when you have more than one), Folder, Search, and Mes
 - Use Reply, Reply all, or Close. Escape also closes the message.
 - For attachments, choose Open attachment, Save attachment, or Save all attachments.
 - Ctrl+R replies and Ctrl+Shift+R replies to all from the message list.
-- Delete moves a message to Gmail Trash after confirmation. Ctrl+Shift+L marks it read; Ctrl+Shift+U marks it unread.
+- Delete moves a message to the Trash; Ctrl+Z undoes it. Ctrl+Shift+L marks it read; Ctrl+Shift+U marks it unread.
+- Ctrl+Shift+F forwards the message, attachments included. The reading window also has Forward, Star, Archive and Delete, with the same shortcuts as the list.
+
+## Organize: archive, move, spam and stars
+- Ctrl+E archives: the message leaves the Inbox but stays saved (All mail in Gmail, the Archive folder elsewhere).
+- Ctrl+Shift+V moves the message to another folder. New folder creates one and moves the message there.
+- Ctrl+J marks as spam. Inside the Spam folder, it marks as not spam and moves the message back to the Inbox.
+- Ctrl+S stars or unstars. The Starred folder lists them all (in Gmail it is the same star as on the website).
+- Like official email apps, the message leaves the list right away and you have the undo-send time to press Ctrl+Z. If that time is zero, AudioMail asks before deleting. In the Trash, Delete removes the message for good and always asks.
+
+## Lists like official email apps
+- Several messages: Shift with the arrows selects a range, Ctrl+Space checks or unchecks one, and Ctrl+A selects all. Delete, archive, move, spam, star, labels and mark read or unread work on all selected messages; Ctrl+Z undoes them together.
+- The list starts with the 100 newest messages. Pressing Down Arrow, Page Down or End on the last one loads 100 more (or File, Load more messages, Ctrl+Shift+M).
+- Moving through the folders, AudioMail says how many unread and how many messages each one has, such as "Social tab, 3 unread, 120 messages". Each row shows a preview of the text; turn it off in Message, Show text preview in the list.
+- In Gmail, the folder list has the Primary, Promotions, Social, Updates and Forums tabs. Ctrl+B opens the labels of the message: Space checks or unchecks each one, and New label creates one.
+- Search accepts Gmail syntax: from:ana subject:invoice has:attachment is:unread is:starred newer_than:7d older_than:1y after:2026/01/31 before:2026/12/31. File, Advanced search (Ctrl+Shift+S) builds it from simple fields.
+- If the text mentions an attachment but no file is attached, AudioMail asks before sending.
+
+## Rules and blocked senders
+- Tools, Rules (Ctrl+Shift+G). A rule checks each new Inbox message: when the Sender, Subject or Recipient contains the text, it can move it to a folder, mark it as read, star it, delete it or play its own sound.
+- Rules run in list order (Move up, Move down). Message, Create rule from this message fills in the sender for you. Apply to the inbox now runs the rules on messages already there.
+- Ctrl+Shift+B blocks the sender of the selected message: their messages go straight to the Trash without alerts. Tools, Blocked senders lists them, with Unblock, and can block a whole domain such as @shop.com.
 
 ## Write a message
 - Ctrl+N opens a new message. The fields are To, Cc, Bcc, Subject, Message body, and Attachments.
@@ -196,7 +217,28 @@ Tab recorre Cuenta (si tienes más de una), Carpeta, Buscar y Mensajes. Carpeta 
 - Usa Responder, Responder a todos o Cerrar. Escape también cierra el mensaje.
 - Para los adjuntos, elige Abrir adjunto, Guardar adjunto o Guardar todos los adjuntos.
 - Ctrl+R responde y Ctrl+Shift+R responde a todos desde la lista.
-- Delete mueve el mensaje a la Papelera de Gmail tras pedir confirmación. Ctrl+Shift+L lo marca como leído y Ctrl+Shift+U como no leído.
+- Delete mueve el mensaje a la Papelera; Ctrl+Z lo deshace. Ctrl+Shift+L lo marca como leído y Ctrl+Shift+U como no leído.
+- Ctrl+Shift+F reenvía el mensaje con sus adjuntos. La ventana de lectura también tiene Reenviar, Destacar, Archivar y Eliminar, con los mismos atajos de la lista.
+
+## Organizar: archivar, mover, spam y destacados
+- Ctrl+E archiva: el mensaje sale de la bandeja de entrada pero queda guardado (Todos los correos en Gmail, la carpeta Archivo en los demás).
+- Ctrl+Shift+V mueve el mensaje a otra carpeta. Nueva carpeta crea una y mueve el mensaje a ella.
+- Ctrl+J lo marca como spam. Dentro de Spam, lo marca como no spam y lo devuelve a la bandeja de entrada.
+- Ctrl+S destaca o quita el destacado. La carpeta Destacados los reúne (en Gmail es la misma estrella del sitio).
+- Como en los programas oficiales, el mensaje sale de la lista enseguida y tiene el tiempo de deshacer envío para pulsar Ctrl+Z. Si ese tiempo es cero, AudioMail pregunta antes de eliminar. En la Papelera, Delete elimina para siempre y siempre pregunta.
+
+## Listas como en los programas oficiales
+- Varios mensajes: Shift con las flechas selecciona varios seguidos, Ctrl+Espacio marca o desmarca uno y Ctrl+A selecciona todos. Eliminar, archivar, mover, spam, destacar, etiquetas y marcar como leído o no leído valen para todos los seleccionados; Ctrl+Z los deshace juntos.
+- La lista empieza con los 100 mensajes más nuevos. Flecha abajo, Avance de página o Fin en el último carga 100 más (o Archivo, Cargar más mensajes, Ctrl+Shift+M).
+- Al recorrer las carpetas, AudioMail dice cuántos no leídos y cuántos mensajes tiene cada una, como "Pestaña Social, 3 no leídos, 120 mensajes". Cada fila muestra una vista previa del texto; se desactiva en Mensaje, Mostrar vista previa del texto en la lista.
+- En Gmail, la lista de carpetas tiene las pestañas Principal, Promociones, Social, Notificaciones y Foros. Ctrl+B abre las etiquetas del mensaje: Espacio marca o desmarca cada una y Nueva etiqueta crea otra.
+- La búsqueda acepta la sintaxis de Gmail: from:ana subject:factura has:attachment is:unread is:starred newer_than:7d older_than:1y after:2026/01/31 before:2026/12/31. Archivo, Búsqueda avanzada (Ctrl+Shift+S) la arma con campos simples.
+- Si el texto menciona un adjunto pero no hay ningún archivo, AudioMail pregunta antes de enviar.
+
+## Reglas y remitentes bloqueados
+- Herramientas, Reglas (Ctrl+Shift+G). Una regla revisa cada mensaje nuevo de la bandeja de entrada: si el Remitente, el Asunto o el Destinatario contiene el texto, puede moverlo a una carpeta, marcarlo como leído, destacarlo, eliminarlo o reproducir un sonido propio.
+- Las reglas se prueban en el orden de la lista (Subir, Bajar). Mensaje, Crear regla a partir de este mensaje rellena el remitente. Aplicar ahora a la bandeja de entrada usa las reglas en los mensajes que ya están allí.
+- Ctrl+Shift+B bloquea al remitente del mensaje seleccionado: sus mensajes van directo a la Papelera sin aviso. Herramientas, Remitentes bloqueados los muestra, con Desbloquear, y permite bloquear un dominio entero como @tienda.com.
 
 ## Escribir un mensaje
 - Ctrl+N abre un mensaje nuevo. Los campos son Para, CC, CCO, Asunto, Texto del mensaje y Adjuntos.

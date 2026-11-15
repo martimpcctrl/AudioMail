@@ -20,17 +20,52 @@ Ordem do Tab:
 1. Conta (só aparece se você tiver mais de uma conta).
 2. Pasta: Caixa de entrada, Rascunhos, Enviados, Lixeira e as outras do Gmail.
 3. Buscar.
-4. Mensagens: a lista. Cada linha diz o estado (Não lida), quem enviou, o assunto e a data.
+4. Mensagens: a lista. Cada linha diz o estado (Não lida, Com estrela e, no Gmail, os marcadores), quem enviou, o assunto, a prévia (o começo do texto) e a data.
 - F6 vai direto para as pastas, F7 para as contas, Ctrl+F para a busca.
+- Ao passar pelas pastas com as setas, o AudioMail fala quantas não lidas e quantas mensagens cada uma tem, como "Aba Social, 3 não lidas, 120 mensagens".
 - A barra de status, no rodapé, diz quantas mensagens e quantas não lidas.
+- A prévia pode ser desligada em Mensagem, Mostrar prévia do texto na lista.
+
+## Várias mensagens de uma vez
+- Shift com as setas seleciona várias mensagens seguidas. Ctrl com as setas anda sem mudar a seleção, e Ctrl+Espaço marca ou desmarca a mensagem atual.
+- Ctrl+A seleciona todas as mensagens da lista. Num campo de texto, Ctrl+A continua selecionando o texto.
+- Apagar, arquivar, mover, spam, estrela, marcadores e marcar como lida ou não lida valem para todas as selecionadas. Ctrl+Z desfaz todas juntas.
+- Abrir, responder e encaminhar usam a mensagem em que você está.
+
+## Mensagens mais antigas
+- A lista começa com as 100 mensagens mais novas. Ao chegar na última e apertar seta para baixo, Page Down ou End, o AudioMail carrega mais 100 e avisa quantas são.
+- Arquivo, Carregar mais mensagens (Ctrl+Shift+M) faz o mesmo de qualquer lugar.
 
 ## Ler e responder
 - Enter numa mensagem abre a leitura. O texto é um campo que você lê com as setas.
-- Os botões da leitura são: Responder, Responder a todos e Fechar. Esc também fecha.
+- Os botões da leitura são: Responder, Responder a todos, Encaminhar, Pôr estrela, Arquivar, Apagar e Fechar. Esc também fecha.
+- Na leitura valem os mesmos atalhos da lista: Ctrl+R, Ctrl+Shift+R, Ctrl+Shift+F, Ctrl+S, Ctrl+E e Delete.
 - Quando a mensagem tem anexos aparece a lista Anexos, com os botões Abrir anexo, Salvar anexo e Salvar todos os anexos.
 - Ctrl+R responde direto da lista, e Ctrl+Shift+R responde a todos.
-- Delete apaga (pede confirmação e manda para a Lixeira).
+- Ctrl+Shift+F encaminha a mensagem, com os anexos, para outra pessoa.
+- Delete apaga (vai para a Lixeira). Ctrl+Z desfaz.
 - Ctrl+Shift+L marca como lida e Ctrl+Shift+U marca como não lida.
+
+## Organizar: arquivar, mover, spam e estrela
+- Ctrl+E arquiva: a mensagem sai da caixa de entrada mas continua guardada (no Gmail, em Todos os e-mails; nos outros, na pasta Arquivo).
+- Ctrl+Shift+V abre a lista de pastas para mover a mensagem. O botão Nova pasta cria uma pasta e já move para ela.
+- Ctrl+J manda para o Spam. Dentro da pasta Spam, o mesmo atalho diz que não é spam e devolve para a caixa de entrada.
+- Ctrl+S põe ou tira a estrela. A pasta Com estrela junta todas (no Gmail é a mesma estrela do site).
+- Apagar, arquivar, mover e spam funcionam como nos programas oficiais: a mensagem some da lista na hora, e você tem o mesmo tempo do desfazer envio para apertar Ctrl+Z e trazer de volta. Se o tempo estiver em zero, o AudioMail pergunta antes de apagar.
+- Na Lixeira, Delete apaga de vez e sempre pergunta antes.
+
+## Regras automáticas
+- Ferramentas, Regras (Ctrl+Shift+G). Uma regra olha cada mensagem nova da caixa de entrada.
+- Escolha o campo (Remetente, Assunto ou Destinatário) e o texto que ele deve conter. Exemplo: Remetente contém loja.com.
+- Marque o que fazer: mover para uma pasta, marcar como lida, pôr estrela, apagar ou tocar um som próprio. O som próprio serve para saber quem mandou sem olhar a lista.
+- As regras são testadas na ordem da lista (botões Subir e Descer). Quando duas regras movem a mesma mensagem, vale a primeira.
+- Mensagem, Criar regra a partir desta mensagem já abre a regra com o remetente da mensagem selecionada.
+- O botão Aplicar agora na caixa de entrada usa as regras nas mensagens que já estão lá.
+- Mensagens movidas, apagadas ou marcadas como lidas por uma regra não dão aviso.
+
+## Bloquear remetentes
+- Ctrl+Shift+B bloqueia quem mandou a mensagem selecionada. As mensagens dele vão direto para a Lixeira, sem aviso, inclusive as que já estão na pasta (Ctrl+Z desfaz).
+- Ferramentas, Remetentes bloqueados mostra a lista, com Desbloquear. Lá também dá para bloquear um domínio inteiro, como @loja.com.
 
 ## Links e e-mails em HTML
 - E-mails de lojas, bancos e newsletters (em HTML) aparecem organizados: títulos e parágrafos separados, listas com marcador, e sem o texto escondido que esses e-mails costumam ter.
@@ -50,6 +85,7 @@ Ordem do Tab:
 - Cópia e Cópia oculta são opcionais e ficam escondidas. Ctrl+Shift+C (ou o botão) mostra e esconde os dois campos. O AudioMail lembra se você deixou aparecendo.
 - Para vários destinatários, separe os endereços com vírgula ou ponto e vírgula.
 - Ctrl+Enter envia de qualquer campo.
+- Se o texto fala de anexo ("segue em anexo", "anexei") e não tem nenhum arquivo, o AudioMail pergunta antes de enviar. Respondendo Não, ele já abre a escolha do arquivo.
 - Anexos: os provedores aceitam cerca de 18 MB no total por mensagem.
 - Ctrl+S salva como rascunho na pasta Rascunhos do Gmail. Se você cancelar uma mensagem alterada, o programa pergunta se quer salvar.
 - Para continuar um rascunho, abra a pasta Rascunhos e aperte Enter nele.
@@ -94,10 +130,20 @@ Ordem do Tab:
 - A chave fica protegida pela criptografia do Windows neste computador. A API pode gerar cobrança na conta do provedor; a assinatura do ChatGPT não inclui automaticamente o uso da API.
 - O resumo inclui o texto e os cabeçalhos das mensagens da conversa. Anexos não são enviados.
 
+## Abas e marcadores do Gmail
+- Nas contas do Gmail, a lista de pastas tem as abas logo depois da Caixa de entrada: Aba Principal, Aba Promoções, Aba Social, Aba Atualizações e Aba Fóruns, cada uma com as suas não lidas e o total de mensagens.
+- Ctrl+B abre os marcadores da mensagem (ou das selecionadas). Espaço marca ou desmarca cada um, e o botão Novo marcador cria outro. Diferente de mover, a mensagem continua na caixa de entrada.
+- Os marcadores aparecem na coluna Estado da lista.
+
 ## Buscar
 - Ctrl+F vai para o campo Buscar. Digite e aperte Enter.
 - A busca olha o remetente, o assunto e o texto, na pasta que estiver aberta, e aceita acentos.
 - Esc limpa a busca e volta para a lista completa.
+
+## Busca avançada
+- No campo Buscar dá para escrever como no Gmail: from:ana, subject:boleto, has:attachment, is:unread, is:starred, newer_than:7d, older_than:1y, after:2026/01/31, before:2026/12/31. Também valem em português: de:, para:, assunto:, tem:anexo, é:não-lida, é:estrela, depois:, antes:.
+- Arquivo, Busca avançada (Ctrl+Shift+S) abre uma janela com os campos De, Para, Assunto, Contém as palavras, Data, Só com anexo, Só não lidas e Só com estrela. O botão Buscar escreve a busca no campo e mostra o resultado.
+- Esc no campo Buscar limpa a busca.
 
 ## Conversas
 - Ctrl+G liga e desliga o agrupamento por conversa, igual ao Gmail. Vem desligado.
@@ -163,6 +209,18 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 - Ctrl+R: responder.
 - Ctrl+Shift+R: responder a todos.
 - Delete: apagar.
+- Ctrl+Shift+F: encaminhar.
+- Ctrl+E: arquivar.
+- Ctrl+Shift+V: mover para a pasta.
+- Ctrl+J: spam ou não spam.
+- Ctrl+S: pôr ou tirar estrela.
+- Ctrl+Z: desfazer apagar, arquivar, mover ou spam.
+- Ctrl+Shift+B: bloquear remetente.
+- Ctrl+Shift+G: regras.
+- Ctrl+A: selecionar todas.
+- Ctrl+B: marcadores do Gmail.
+- Ctrl+Shift+S: busca avançada.
+- Ctrl+Shift+M: carregar mais mensagens.
 - F5: atualizar.
 - Ctrl+F: buscar.
 - F6: pastas.
@@ -176,7 +234,7 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 - F1: abrir este manual.
 - Ctrl+Q: sair de verdade.
 - Na escrita: Ctrl+Enter envia, Ctrl+S salva o rascunho, Ctrl+K abre os contatos, Ctrl+Shift+C mostra ou esconde Cópia e Cópia oculta, Ctrl+Shift+P abre as respostas prontas.
-- Na leitura: Ctrl+Enter abre o link da linha.
+- Na leitura: Ctrl+Enter abre o link da linha; Ctrl+R, Ctrl+Shift+R, Ctrl+Shift+F, Ctrl+S, Ctrl+E e Delete fazem o mesmo que na lista.
 
 ## Problemas comuns
 - Não consegui entrar: confira se é a senha de app e não a senha normal, e se a verificação em duas etapas está ligada. Se mudou a senha do Google, as senhas de app antigas deixam de valer: crie outra.

@@ -235,3 +235,24 @@ def one_click_unsubscribe(url, timeout=20, opener=urllib.request.urlopen):
                                               "User-Agent": "AudioMail"})
     with opener(request, timeout=timeout) as response:
         return 200 <= getattr(response, "status", 200) < 300
+
+
+_ATTACH_WORDS = re.compile(
+    r"(?i)\b(anexo|anexos|anexei|anexada|anexado|anexadas|anexados|em anexo|segue o arquivo|"
+    r"segue a planilha|segue o documento|segue a foto|seguem as fotos|attached|attachment|"
+    r"attaching|adjunto|adjuntos|adjunta|adjunté)\b")
+
+
+def mentions_attachment(body):
+    """O texto que você escreveu fala de anexo? (ignora a assinatura, as linhas
+    citadas com > e a mensagem encaminhada ou respondida que vem embaixo)."""
+    mine = []
+    for line in (body or "").replace("\r", "").split("\n"):
+        stripped = line.strip()
+        if stripped == "--" or line == "-- " or stripped.startswith("---------- ") \
+                or re.match(r"(?i)^(em|on|el) .{5,120}(escreveu|wrote|escribió):$", stripped):
+            break
+        if stripped.startswith(">"):
+            continue
+        mine.append(line)
+    return bool(_ATTACH_WORDS.search("\n".join(mine)))

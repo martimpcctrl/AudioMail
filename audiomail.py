@@ -24,6 +24,8 @@ import legal
 import outbox
 import providers
 import compose_extras as cx
+import organize
+import views
 from contacts import Contacts
 from common import data_dir
 from common import (DEFAULTS, config_path, default_sound_path, find_account, forget_password,
@@ -57,6 +59,14 @@ class Account:
         self.checking = False
         self.recheck = False
         self.manual = False
+        self.view_filter = None     # pasta de mentira: "flagged" ou "category:..." (aba do Gmail)
+        self.limit = views.PAGE      # quantas mensagens mostrar (Carregar mais aumenta)
+        self.total = 0               # quantas a pasta (ou a busca) tem no servidor
+        self.counts = {}             # não lidas por pasta
+        self.counts_at = 0.0
+        self.counting = False
+        self.snippets = {}           # (pasta, uid) -> começo do texto
+        self.loading_snippets = False
 
 
 def _active(name, default):
@@ -167,7 +177,7 @@ class TrayIcon(wx.adv.TaskBarIcon):
         return menu
 
 
-class MainFrame(wx.Frame):
+class MainFrame(views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
     def SetStatusText(self, text, number=0):
         return super().SetStatusText(i18n.tr(text), number)
 
@@ -195,6 +205,7 @@ class MainFrame(wx.Frame):
         self.contacts = Contacts(os.path.join(data_dir(), "contatos.json"))
         self.scheduled = outbox.Scheduled(data_dir())
         self.pending_sends = []    # envios esperando o tempo de desfazer
+        self.pending_moves = []    # mover/apagar esperando o tempo de desfazer
         self.sending_scheduled = set()
 
         sounds.ensure_default(default_sound_path())
@@ -216,11 +227,13 @@ class MainFrame(wx.Frame):
         lbl_search = wx.StaticText(panel, label=i18n.tr("Buscar"))
         self.search_box = set_name(wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER), i18n.tr("Buscar"))
         lbl_list = wx.StaticText(panel, label=i18n.tr("Mensagens"))
-        self.list = set_name(wx.ListCtrl(panel, style=wx.LC_REPORT | wx.LC_SINGLE_SEL), i18n.tr("Mensagens"))
+        # várias selecionadas, como nos programas oficiais (Shift e Ctrl com as setas, Ctrl+A)
+        self.list = set_name(wx.ListCtrl(panel, style=wx.LC_REPORT), i18n.tr("Mensagens"))
         self.list.InsertColumn(0, i18n.tr("Estado"), width=90)
         self.list.InsertColumn(1, i18n.tr("De"), width=220)
-        self.list.InsertColumn(2, i18n.tr("Assunto"), width=420)
-        self.list.InsertColumn(3, i18n.tr("Data"), width=140)
+        self.list.InsertColumn(2, i18n.tr("Assunto"), width=380)
+        self.list.InsertColumn(3, i18n.tr("Prévia"), width=320 if self.setting("show_preview") else 0)
+        self.list.InsertColumn(4, i18n.tr("Data"), width=140)
         sizer.Add(self.lbl_account, 0, wx.LEFT | wx.TOP, 8)
         sizer.Add(self.account_choice, 0, wx.EXPAND | wx.ALL, 8)
         sizer.Add(lbl_folder, 0, wx.LEFT | wx.TOP, 8)
@@ -239,6 +252,7 @@ class MainFrame(wx.Frame):
         self.search_box.Bind(wx.EVT_TEXT_ENTER, lambda e: self.do_search())
         self.search_box.Bind(wx.EVT_KEY_DOWN, self.on_search_key)
         self.list.Bind(wx.EVT_LIST_ITEM_ACTIVATED, lambda e: self.open_selected())
+        self.list.Bind(wx.EVT_KEY_DOWN, self.on_list_key)
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
         self.Bind(wx.EVT_TIMER, self.on_reminder_timer, self.reminder_timer)
         self.Bind(wx.EVT_TIMER, self.on_update_timer, self.update_timer)
@@ -329,6 +343,8 @@ class MainFrame(wx.Frame):
         self.add(m, "Nova mensagem\tCtrl+N", lambda e: self.compose())
         self.add(m, "Atualizar\tF5", lambda e: self.refresh())
         self.add(m, "Buscar\tCtrl+F", lambda e: self.search_box.SetFocus())
+        self.add(m, "Busca avançada...\tCtrl+Shift+S", lambda e: self.open_advanced_search())
+        self.add(m, "Carregar mais mensagens\tCtrl+Shift+M", lambda e: self.load_more())
         self.add(m, "Ir para as pastas\tF6", lambda e: self.choice.SetFocus())
         self.add(m, "Ir para as contas\tF7", lambda e: self.account_choice.SetFocus())
         self.add(m, "Adicionar conta", lambda e: self.ask_login(blank=True))
@@ -342,15 +358,31 @@ class MainFrame(wx.Frame):
         self.add(m, "Abrir", lambda e: self.open_selected())
         self.add(m, "Responder\tCtrl+R", lambda e: self.reply_selected(False))
         self.add(m, "Responder a todos\tCtrl+Shift+R", lambda e: self.reply_selected(True))
+        self.add(m, "Encaminhar\tCtrl+Shift+F", lambda e: self.forward_selected())
         self.add(m, "Traduzir mensagem\tCtrl+T", lambda e: self.open_selected(auto_translate=True))
-        self.add(m, "Apagar\tDel", lambda e: self.delete_selected())
+        m.AppendSeparator()
+        self.add(m, "Arquivar\tCtrl+E", lambda e: self.archive_selected())
+        self.add(m, "Mover para a pasta...\tCtrl+Shift+V", lambda e: self.move_selected())
+        self.add(m, "Marcar como spam ou não spam\tCtrl+J", lambda e: self.spam_selected())
+        self.add(m, "Apagar\tDel", lambda e: self.on_delete_key())
+        self.add(m, "Desfazer\tCtrl+Z", lambda e: self.on_undo_key())
+        m.AppendSeparator()
+        self.add(m, "Pôr ou tirar estrela\tCtrl+S", lambda e: self.toggle_star_selected())
+        self.add(m, "Marcadores...\tCtrl+B", lambda e: self.open_labels())
+        self.add(m, "Selecionar tudo\tCtrl+A", lambda e: self.select_all())
         self.add(m, "Marcar como lida\tCtrl+Shift+L", lambda e: self.mark_selected(True))
         self.add(m, "Marcar como não lida\tCtrl+Shift+U", lambda e: self.mark_selected(False))
+        self.add(m, "Bloquear remetente\tCtrl+Shift+B", lambda e: self.block_selected())
+        self.add(m, "Criar regra a partir desta mensagem", lambda e: self.open_rules(from_selected=True))
+        m.AppendSeparator()
         self.add(m, "Desfazer envio\tCtrl+Shift+Z", lambda e: self.undo_send())
         self.add(m, "Mensagens agendadas", lambda e: self.open_scheduled())
         self.group_item = m.AppendCheckItem(wx.ID_ANY, i18n.tr("Agrupar por conversa\tCtrl+G"))
         self.group_item.Check(bool(self.setting("group_threads")))
         self.Bind(wx.EVT_MENU, self.on_toggle_group, self.group_item)
+        self.preview_item = m.AppendCheckItem(wx.ID_ANY, i18n.tr("Mostrar prévia do texto na lista"))
+        self.preview_item.Check(bool(self.setting("show_preview")))
+        self.Bind(wx.EVT_MENU, self.on_toggle_preview, self.preview_item)
         bar.Append(m, i18n.tr("&Mensagem"))
 
         m = wx.Menu()
@@ -358,6 +390,8 @@ class MainFrame(wx.Frame):
         self.add(m, "Escolher som de notificação", lambda e: self.choose_sound())
         self.add(m, "Testar som", lambda e: self.test_sound())
         self.add(m, "Calendário", lambda e: self.open_reminders())
+        self.add(m, "Regras\tCtrl+Shift+G", lambda e: self.open_rules())
+        self.add(m, "Remetentes bloqueados", lambda e: self.open_blocked())
         bar.Append(m, i18n.tr("&Ferramentas"))
 
         m = wx.Menu()
@@ -451,6 +485,7 @@ class MainFrame(wx.Frame):
         self.timer.Stop()
         self.reminder_timer.Stop()
         self.flush_pending_sends()
+        self.flush_pending_moves()
         for acc in self.accounts:
             self.stop_watcher(acc)
             if acc.client:
@@ -572,9 +607,12 @@ class MainFrame(wx.Frame):
         acc.checking = True
         client = acc.client
 
+        plain_inbox = acc.current_raw == "INBOX" and not acc.search and not acc.view_filter
+        limit = max(acc.limit, views.PAGE) if plain_inbox else views.PAGE
+
         def work():
             try:
-                msgs, err = client.fetch_headers("INBOX"), None
+                msgs, err = client.fetch_headers("INBOX", limit=limit), None
             except Exception as e:
                 msgs, err = None, e
             wx.CallAfter(self.after_check, acc, msgs, err)
@@ -617,22 +655,30 @@ class MainFrame(wx.Frame):
         else:
             self.contacts_from_headers(acc, new)
         self.note_inbox(acc, msgs)
-        if acc is self.active and acc.current_raw == "INBOX" and not acc.search:
-            self.show_messages(msgs, keep=True)
+        quiet, rule_sounds = set(), {}
         if new:
-            self.notify_new(acc, new)
+            quiet, rule_sounds = self.apply_rules(acc, new)
+        if acc is self.active and acc.current_raw == "INBOX" and not acc.search \
+                and not acc.view_filter:
+            self.show_messages(msgs, keep=True)
+        new = [m for m in new if m["uid"] not in quiet]
+        if new:
+            sound = next((rule_sounds[m["uid"]] for m in new if m["uid"] in rule_sounds), None)
+            self.notify_new(acc, new, sound)
         elif manual:
             text = "Nenhuma mensagem nova. %d não lidas.%s" % (acc.inbox_unread, suffix)
             self.toast("AudioMail", text)
             self.announce(text)
 
-    def notify_new(self, acc, new):
+    def notify_new(self, acc, new, sound=None):
         title, text = mc.format_notification(new)
         if len(self.accounts) > 1:
             text = "%s (%s)" % (text, acc.email)
         if self.setting("notify"):
             self.toast(title, text)
-        if self.setting("sound"):
+        if sound:
+            sounds.play(sound)     # som próprio de uma regra
+        elif self.setting("sound"):
             sounds.play(self.sound_path())
         if self.setting("speak"):
             speech.speak(i18n.tr("%s. %s" % (title, text)))
@@ -922,9 +968,10 @@ class MainFrame(wx.Frame):
             self.stop_watcher(acc)
             if acc.client:
                 acc.client.close()
-            acc.client, acc.folders = client, folders
+            acc.client, acc.folders = client, organize.with_virtual(folders, client.gmail)
             acc.baseline, acc.messages, acc.view = None, [], []
-            acc.current_raw, acc.search = "INBOX", ""
+            acc.current_raw, acc.search, acc.view_filter = "INBOX", "", None
+            acc.limit, acc.counts, acc.snippets, acc.counts_at = views.PAGE, {}, {}, 0.0
             entry = find_account(self.cfg, v["email"])
             if entry is None:
                 entry = {"email": v["email"]}
@@ -1015,13 +1062,20 @@ class MainFrame(wx.Frame):
         self.choice.Clear()
         selected = 0
         for i, f in enumerate(acc.folders):
-            self.choice.Append(f["display"])
-            if f["raw"] == acc.current_raw or (
+            self.choice.Append(views.folder_label(f, acc.counts))
+            if acc.view_filter:
+                if f.get("filter") == acc.view_filter:
+                    selected = i
+            elif f["raw"] == acc.current_raw or (
                     acc.current_raw == "INBOX" and f["raw"].upper() == "INBOX"):
                 selected = i
         if acc.folders:
             self.choice.SetSelection(selected)
-            acc.current_raw = acc.folders[selected]["raw"]
+            if acc is self.active:
+                self.choose_folder(acc.folders[selected])
+            else:
+                acc.view_filter = acc.folders[selected].get("filter")
+                acc.current_raw = "INBOX" if acc.view_filter else acc.folders[selected]["raw"]
 
     def folder_has(self, flag):
         for f in self.folders:
@@ -1032,12 +1086,13 @@ class MainFrame(wx.Frame):
     def on_folder(self, evt):
         i = self.choice.GetSelection()
         if i != wx.NOT_FOUND and self.active:
-            self.current_raw = self.folders[i]["raw"]
+            self.choose_folder(self.folders[i])
             self.refresh()
 
     def do_search(self):
         if self.active:
             self.active.search = self.search_box.GetValue().strip()
+            self.active.limit = views.PAGE
             self.refresh()
 
     def on_search_key(self, evt):
@@ -1045,56 +1100,73 @@ class MainFrame(wx.Frame):
             self.search_box.SetValue("")
             if self.active.search:
                 self.active.search = ""
+                self.active.limit = views.PAGE
                 self.refresh()
             else:
                 self.list.SetFocus()
             return
         evt.Skip()
 
-    def refresh(self):
+    def refresh(self, after=None):
         acc = self.active
         if not acc or not acc.client:
             return
-        raw, query, client = acc.current_raw, acc.search, acc.client
+        raw, query, client, view_filter = acc.current_raw, acc.search, acc.client, acc.view_filter
+        limit = acc.limit
 
         def work():
-            return client.search(raw, query) if query else client.fetch_headers(raw)
+            if query or view_filter:
+                return client.search_query(raw, query, limit, view_filter)
+            return client.fetch_headers(raw, limit=limit, with_total=True)
 
-        def done(msgs):
-            if acc is not self.active or raw != acc.current_raw or query != acc.search:
+        def done(result):
+            if acc is not self.active or raw != acc.current_raw or query != acc.search \
+                    or view_filter != acc.view_filter:
                 return
-            self.show_messages(msgs)
+            msgs, acc.total = result
+            self.show_messages(msgs, keep=after is not None)
+            if after:
+                after()
 
         self.run(work, done, "Buscando" if query else "Carregando mensagens")
 
     def show_messages(self, msgs, keep=False):
         acc = self.active
+        hidden = organize.hidden_uids(self.pending_moves, acc, acc.current_raw)
+        if hidden:
+            msgs = [m for m in msgs if m["uid"] not in hidden]
         selected_uid = None
         if keep:
             _, row = self.selected()
             selected_uid = row["uids"][0] if row else None
-            if [(m["uid"], m["unread"]) for m in msgs] == \
-                    [(m["uid"], m["unread"]) for m in self.messages]:
+            if [(m["uid"], m["unread"], m.get("flagged")) for m in msgs] == \
+                    [(m["uid"], m["unread"], m.get("flagged")) for m in self.messages]:
                 return
         self.messages = msgs
-        if acc.current_raw == "INBOX" and not acc.search:
+        if acc.current_raw == "INBOX" and not acc.search and not acc.view_filter:
             self.note_inbox(acc, msgs)
         self.render(selected_uid, focus=not keep)
         if acc.search:
-            self.SetStatusText("%d resultados para %s" % (len(msgs), acc.search))
+            self.SetStatusText("%d resultados para %s" % (max(len(msgs), acc.total), acc.search))
         else:
             unread = sum(1 for m in msgs if m["unread"])
-            self.SetStatusText("%d mensagens, %d não lidas" % (len(msgs), unread))
+            if acc.total > len(msgs):
+                self.SetStatusText("%d de %d mensagens, %d não lidas" % (len(msgs), acc.total, unread))
+            else:
+                self.SetStatusText("%d mensagens, %d não lidas" % (len(msgs), unread))
+        self.refresh_counts(acc)
+        self.load_snippets(acc)
 
     def render(self, selected_uid=None, focus=False):
         rows = mc.build_rows(self.messages, bool(self.setting("group_threads")))
         self.view = rows
         self.list.DeleteAllItems()
         for i, r in enumerate(rows):
-            self.list.InsertItem(i, "Não lida" if r["unread"] else "")
+            self.list.InsertItem(i, mc.state_text(r))
             self.list.SetItem(i, 1, r["from"])
             self.list.SetItem(i, 2, r["subject"])
-            self.list.SetItem(i, 3, r["date"])
+            self.list.SetItem(i, 3, self.snippet_for(self.active, self.active.current_raw, r))
+            self.list.SetItem(i, 4, r["date"])
         if rows:
             index = 0
             if selected_uid:
@@ -1120,7 +1192,10 @@ class MainFrame(wx.Frame):
         self.list.EnsureVisible(index)
 
     def selected(self):
-        i = self.list.GetFirstSelected()
+        """A linha com o foco (com várias selecionadas, é a que o leitor de tela leu por último)."""
+        i = self.list.GetFocusedItem()
+        if i == -1 or not self.list.IsSelected(i):
+            i = self.list.GetFirstSelected()
         if i == -1 or i >= len(self.view):
             return None, None
         return i, self.view[i]
@@ -1134,8 +1209,8 @@ class MainFrame(wx.Frame):
         for i, r in enumerate(self.view):
             if wanted & set(r["uids"]):
                 r["unread"] = any(m["unread"] for m in self.messages if m["uid"] in r["uids"])
-                self.list.SetItem(i, 0, "Não lida" if r["unread"] else "")
-        if acc.current_raw == "INBOX" and not acc.search:
+                self.list.SetItem(i, 0, mc.state_text(r))
+        if acc.current_raw == "INBOX" and not acc.search and not acc.view_filter:
             acc.inbox_unread = sum(1 for m in self.messages if m["unread"])
             self.update_tray()
 
@@ -1169,13 +1244,22 @@ class MainFrame(wx.Frame):
             dlg = ReadDialog(self, newest["subject"], text, attachments, self.announce,
                              sections=sections, prefix=prefix, translation=self.translation,
                              auto_translate=auto_translate, ai_summary=self.ai_summary,
-                             links=links, unsubscribe=self.unsubscribe_action(acc, newest))
+                             links=links, unsubscribe=self.unsubscribe_action(acc, newest),
+                             organize=True, flagged=bool(row.get("flagged")))
             dlg.ShowModal()
             result, mailto = dlg.result, dlg.link_to_open
             dlg.Destroy()
             if result == "mailto" and mailto:
                 address, subject, body = mt.mailto_parts(mailto)
                 self.compose(to=address, subject=subject, body=body)
+            elif result == "forward":
+                self.forward_full(newest)
+            elif result == "archive":
+                self.archive_selected(rows=[row])
+            elif result == "delete":
+                self.delete_selected(rows=[row])
+            elif result == "star":
+                self.toggle_star_selected(rows=[row])
             elif result:
                 self.reply_to(newest, result == "replyall")
             self.list.SetFocus()
@@ -1499,46 +1583,13 @@ class MainFrame(wx.Frame):
 
             self.run(keep_draft, done, "Cancelando o agendamento")
 
-    # ---- apagar e marcar ----
-    def delete_selected(self):
-        i, row = self.selected()
-        if row is None or not self.active:
-            return
-        if row["count"] > 1:
-            question = "Apagar a conversa com %d mensagens, assunto %s?" % (
-                row["count"], row["subject"])
-        else:
-            question = "Apagar a mensagem de %s, assunto %s?" % (row["from"], row["subject"])
-        if i18n.message_box(question, "Confirmar", wx.YES_NO | wx.ICON_QUESTION, self) != wx.YES:
-            self.list.SetFocus()
+    # ---- marcar (apagar, mover e estrela ficam em organize.py) ----
+    def mark_selected(self, seen):
+        rows = [r for _, r in self.selected_rows()]
+        if not rows or not self.active:
             return
         acc = self.active
-        client, raw, uids = acc.client, acc.current_raw, list(row["uids"])
-
-        def work():
-            for u in uids:
-                client.delete(raw, u)
-
-        def done(_):
-            if acc is not self.active or raw != acc.current_raw:
-                return
-            gone = set(uids)
-            self.messages = [m for m in self.messages if m["uid"] not in gone]
-            if raw == "INBOX" and not acc.search:
-                self.note_inbox(acc, self.messages)
-            self.render()
-            if self.view:
-                self.select(min(i, len(self.view) - 1))
-            self.announce("Apagada. %d restantes." % len(self.view))
-            self.list.SetFocus()
-
-        self.run(work, done, "Apagando")
-
-    def mark_selected(self, seen):
-        i, row = self.selected()
-        if row is None or not self.active:
-            return
-        client, raw, uids = self.active.client, self.active.current_raw, list(row["uids"])
+        client, raw, uids = acc.client, acc.current_raw, self._uids(rows)
 
         def work():
             for u in uids:
@@ -1546,7 +1597,12 @@ class MainFrame(wx.Frame):
 
         def done(_):
             self.set_unread(uids, not seen)
-            self.announce("Marcada como lida." if seen else "Marcada como não lida.")
+            self.refresh_counts(acc, force=True)
+            if len(rows) > 1:
+                self.announce(i18n.tr("%d marcadas como lidas." if seen else "%d marcadas como não lidas.")
+                              % len(rows))
+            else:
+                self.announce("Marcada como lida." if seen else "Marcada como não lida.")
 
         self.run(work, done, "Atualizando")
 

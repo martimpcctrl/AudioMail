@@ -8,6 +8,10 @@ Cliente de e-mail para Windows (Gmail, Yahoo, iCloud, Zoho, UOL, BOL, Terra e ou
 - E-mails em HTML organizados para leitura, com a lista de links para abrir direto (Ctrl+Enter abre o link da linha).
 - Contatos aprendidos sozinhos, com sugestões ao digitar o endereço (Ctrl+K busca).
 - Desfazer envio, agendar envio, respostas prontas e cancelar inscrição de newsletters com um botão.
+- Encaminhar, arquivar, mover para pasta, spam e estrela, com Ctrl+Z para desfazer.
+- Regras automáticas (mover, marcar como lida, estrela, apagar, som próprio) e bloqueio de remetentes.
+- Lista como nos programas oficiais: várias mensagens de uma vez, carregar as mais antigas, não lidas em cada pasta e prévia do texto.
+- Abas e marcadores do Gmail, busca avançada (from:, subject:, has:attachment...) e aviso de anexo esquecido.
 - Avisa na hora quando chega mensagem nova e fica na bandeja do sistema.
 - Busca, conversas, pastas, rascunhos e atalhos de teclado para tudo.
 - Tradução de mensagens e do texto que você escreve.

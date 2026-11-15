@@ -17,6 +17,7 @@ from html.parser import HTMLParser
 
 import i18n
 import message_text as mt
+import search_query as sq
 from contacts import parse_addresses
 
 _OUTLOOK = ("outlook.office365.com", 993, "smtp-mail.outlook.com", 587, "starttls")
@@ -51,6 +52,26 @@ def decode_imap_utf7(text):
         chunk += "=" * (-len(chunk) % 4)
         return base64.b64decode(chunk).decode("utf-16-be")
     return re.sub(r"&([^-]*)-", repl, text)
+
+
+def encode_imap_utf7(text):
+    """O contrário de decode_imap_utf7: nome com acentos para o servidor."""
+    out, buf = [], []
+
+    def flush():
+        if buf:
+            data = "".join(buf).encode("utf-16-be")
+            out.append("&" + base64.b64encode(data).decode().rstrip("=").replace("/", ",") + "-")
+            buf.clear()
+
+    for ch in text:
+        if 0x20 <= ord(ch) <= 0x7e:
+            flush()
+            out.append("&-" if ch == "&" else ch)
+        else:
+            buf.append(ch)
+    flush()
+    return "".join(out)
 
 
 def quote_folder(raw):
@@ -186,6 +207,7 @@ def parse_header_fetch(data):
         if not uid:
             continue
         thrid = re.search(r"X-GM-THRID (\d+)", meta)
+        labels = parse_labels(meta)
         flags = re.search(r"FLAGS \(([^)]*)\)", meta)
         flagset = {f.lower() for f in (flags.group(1).split() if flags else [])}
         hdr = message_from_bytes(item[1], policy=policy.default)
@@ -194,13 +216,122 @@ def parse_header_fetch(data):
             "uid": uid.group(1),
             "from": short_sender(sender),
             "from_raw": sender,
+            "to_raw": _h(hdr, "To"),
             "subject": _h(hdr, "Subject") or "(sem assunto)",
             "date": fmt_date(_h(hdr, "Date")),
             "unread": "\\seen" not in flagset,
+            "flagged": "\\flagged" in flagset,
             "thrid": thrid.group(1) if thrid else None,
+            "labels": labels,
         })
     out.sort(key=lambda m: int(m["uid"]), reverse=True)
     return out
+
+
+def _label_tokens(text):
+    """Itens de uma lista IMAP entre parênteses: "texto com espaço" ou átomo."""
+    out, i = [], 0
+    while i < len(text):
+        ch = text[i]
+        if ch == '"':
+            j, buf = i + 1, []
+            while j < len(text) and text[j] != '"':
+                if text[j] == "\\" and j + 1 < len(text):
+                    j += 1
+                buf.append(text[j])
+                j += 1
+            out.append("".join(buf))
+            i = j + 1
+        elif ch == ")":
+            break
+        elif ch.isspace():
+            i += 1
+        else:
+            j = i
+            while j < len(text) and not text[j].isspace() and text[j] != ")":
+                j += 1
+            out.append(text[i:j])
+            i = j
+    return out
+
+
+def parse_labels(meta):
+    """Marcadores do Gmail (X-GM-LABELS) que a pessoa criou; os do sistema
+    (\\Inbox, \\Important...) ficam de fora."""
+    m = re.search(r"X-GM-LABELS \(", meta or "")
+    if not m:
+        return []
+    return [decode_imap_utf7(t) for t in _label_tokens(meta[m.end():])
+            if t and not t.startswith("\\")]
+
+
+def parse_fetch_items(data):
+    """Resposta de um UID FETCH com várias partes por mensagem:
+    {uid: {"meta": texto, "parts": {seção: bytes}}}."""
+    out, current = {}, None
+    for item in data or []:
+        if isinstance(item, tuple):
+            meta = item[0].decode("utf-8", "replace")
+            if re.match(r"\s*\d+ \(", meta):
+                current = {"meta": "", "parts": {}}
+            if current is None:
+                continue
+            current["meta"] += " " + meta
+            sec = re.findall(r"BODY\[([^\]]*)\](?:<\d+>)?\s*\{\d+\}\s*$", meta)
+            if sec:
+                current["parts"][sec[-1]] = item[1]
+        elif isinstance(item, bytes) and current is not None:
+            current["meta"] += " " + item.decode("utf-8", "replace")
+        else:
+            continue
+        uid = re.search(r"UID (\d+)", current["meta"])
+        if uid:
+            out[uid.group(1)] = current
+    return out
+
+
+def snippet_from_raw(header_bytes, text_bytes, limit=140):
+    """O começo do texto de uma mensagem para a prévia da lista, a partir do
+    cabeçalho de tipo e dos primeiros bytes do corpo (pode vir cortado)."""
+    try:
+        msg = message_from_bytes((header_bytes or b"").rstrip(b"\r\n") + b"\r\n\r\n" + (text_bytes or b""),
+                                 policy=policy.default)
+        part = msg.get_body(preferencelist=("plain", "html"))
+    except Exception:
+        return ""
+    if part is None:
+        return ""
+    cte = str(part.get("Content-Transfer-Encoding", "")).lower()
+    raw = part.get_payload(decode=False) or ""
+    if isinstance(raw, list):
+        return ""
+    try:
+        if "base64" in cte:
+            # o corpo vem cortado: decodifica só os blocos inteiros de 4 letras
+            clean = re.sub(r"[^A-Za-z0-9+/]", "", raw)
+            text = base64.b64decode(clean[:len(clean) // 4 * 4]).decode(
+                part.get_content_charset() or "utf-8", "replace")
+        else:
+            text = part.get_content()
+    except Exception:
+        try:
+            text = raw.encode("latin-1", "replace").decode(part.get_content_charset() or "utf-8", "replace")
+        except Exception:
+            return ""
+    if part.get_content_type() == "text/html":
+        text, _ = mt.html_to_readable(text)
+        text = mt.LINK_MARK.sub("", text)
+    lines = []
+    for line in text.replace("\r", "").split("\n"):
+        line = line.strip()
+        if line.startswith(">") or re.match(r"(?i)^(em|on|el) .{5,80}(escreveu|wrote|escribió):$", line):
+            break
+        if line:
+            lines.append(line)
+    text = re.sub(r"\s+", " ", " ".join(lines)).strip()
+    if len(text) > limit:
+        text = text[:limit].rsplit(" ", 1)[0] + "…"
+    return text
 
 
 def parse_full_message(raw_bytes, uid):
@@ -246,6 +377,34 @@ def parse_full_message(raw_bytes, uid):
         "list_unsubscribe_post": _h(msg, "List-Unsubscribe-Post"),
         "attachments": attachments,
     }
+
+
+def build_forward(orig):
+    """Assunto e texto para encaminhar uma mensagem (os anexos vão à parte)."""
+    subject = orig["subject"] or ""
+    prefix = i18n.tr("Enc:")
+    if not re.match(r"(?i)\s*(enc|fwd?|rv)\s*:", subject):
+        subject = "%s %s" % (prefix, subject)
+    lines = ["", "", i18n.tr("---------- Mensagem encaminhada ----------"),
+             i18n.tr("De: %s") % orig["from"], i18n.tr("Data: %s") % orig["date"],
+             i18n.tr("Assunto: %s") % orig["subject"]]
+    if orig.get("to"):
+        lines.append(i18n.tr("Para: %s") % orig["to"])
+    if orig.get("cc"):
+        lines.append(i18n.tr("Cópia: %s") % orig["cc"])
+    body = "\n".join(lines) + "\n\n" + (orig.get("body") or "")
+    return {"subject": subject.strip(), "body": body}
+
+
+def state_text(row):
+    """Coluna Estado da lista: não lida e/ou com estrela."""
+    parts = []
+    if row.get("unread"):
+        parts.append(i18n.tr("Não lida"))
+    if row.get("flagged"):
+        parts.append(i18n.tr("Com estrela"))
+    parts.extend(row.get("labels") or [])     # marcadores do Gmail
+    return ", ".join(parts)
 
 
 def build_reply(orig, my_email, reply_all=False):
@@ -345,7 +504,9 @@ def _row(msgs):
             "  (%d mensagens)" % len(msgs)
     return {"uids": [m["uid"] for m in msgs], "from": sender, "subject": subject,
             "date": newest["date"], "unread": any(m["unread"] for m in msgs),
-            "count": len(msgs)}
+            "flagged": any(m.get("flagged") for m in msgs),
+            "labels": list(newest.get("labels") or []),
+            "from_raw": newest.get("from_raw", ""), "count": len(msgs)}
 
 
 def build_rows(msgs, grouped):
@@ -453,6 +614,7 @@ class MailClient:
         self.selected = None
         self.folders = []
         self.gmail = "gmail" in imap_host.lower()   # conversas (X-GM-THRID) so no Gmail
+        self.can_move = False
         self.lock = threading.RLock()
 
     # conexao
@@ -468,6 +630,7 @@ class MailClient:
                 self.imap.login(self.email, self.password)
                 caps = [c.upper() for c in (self.imap.capabilities or ())]
                 self.gmail = "X-GM-EXT-1" in caps
+                self.can_move = "MOVE" in caps
             except imaplib.IMAP4.error as e:
                 raise MailError("Não foi possível entrar. Confira o e-mail e a senha de app. "
                                 "Detalhe: %s" % e)
@@ -525,37 +688,142 @@ class MailClient:
         return None
 
     # mensagens
-    def fetch_headers(self, folder_raw, limit=100):
+    def fetch_headers(self, folder_raw, limit=100, with_total=False):
+        """As ``limit`` mensagens mais novas da pasta (com o total, se pedido)."""
         with self.lock:
             self._ensure()
             self._select(folder_raw)
             typ, data = self.imap.uid("SEARCH", None, "ALL")
             if typ != "OK":
                 raise MailError("Falha ao buscar mensagens.")
-            return self._headers_for(data[0].split()[-limit:])
+            uids = data[0].split()
+            msgs = self._headers_for(uids[-limit:])
+        return (msgs, len(uids)) if with_total else msgs
 
-    def search(self, folder_raw, query, limit=100):
-        """Busca o texto no remetente, assunto e corpo (aceita acentos)."""
+    def search(self, folder_raw, query, limit=100, flagged=False):
+        """Busca simples (texto do campo Buscar); devolve só as mensagens."""
+        return self.search_query(folder_raw, query, limit,
+                                 view_filter="flagged" if flagged else None)[0]
+
+    def search_query(self, folder_raw, query, limit=100, view_filter=None):
+        """Busca com o jeito de escrever do Gmail (veja search_query.py).
+        ``view_filter``: None, "flagged" (só com estrela) ou "category:..." (aba do Gmail).
+        Devolve (mensagens, total encontrado)."""
+        c = sq.parse_query(query)
         with self.lock:
             self._ensure()
             self._select(folder_raw)
-            self.imap.literal = query.encode("utf-8")
-            try:
-                typ, data = self.imap.uid("SEARCH", "CHARSET", "UTF-8", "TEXT")
-            finally:
-                self.imap.literal = None
+            check = []
+            if self.gmail and (not sq.is_empty(c) or (view_filter or "").startswith("category:")):
+                extra = view_filter if (view_filter or "").startswith("category:") else ""
+                if view_filter == "flagged":
+                    c["starred"] = True
+                typ, data = self._search_literal([], ("X-GM-RAW", sq.to_gmail_raw(c, extra)))
+            else:
+                keys, literal, check = sq.to_imap(c, flagged=view_filter == "flagged")
+                typ, data = self._search_literal(keys, literal)
             if typ != "OK":
                 raise MailError("Falha na busca.")
-            return self._headers_for(data[0].split()[-limit:])
+            uids = data[0].split() if data and data[0] else []
+            if not check:
+                return self._headers_for(uids[-limit:]), len(uids)
+            # parte da busca é conferida aqui: lê mais cabeçalhos para sobrar o bastante
+            msgs = [m for m in self._headers_for(uids[-limit * 3:]) if sq.passes(m, check)]
+            return msgs[:limit], len(msgs)
+
+    def _search_literal(self, keys, literal):
+        if literal is None:
+            return self.imap.uid("SEARCH", None, *keys)
+        self.imap.literal = literal[1].encode("utf-8")
+        try:
+            return self.imap.uid("SEARCH", "CHARSET", "UTF-8", *keys, literal[0])
+        finally:
+            self.imap.literal = None
+
+    def snippets(self, folder_raw, uids, size=4096):
+        """{uid: começo do texto} para a prévia da lista. Nunca levanta erro."""
+        if not uids:
+            return {}
+        try:
+            with self.lock:
+                self._ensure()
+                self._select(folder_raw)
+                typ, data = self.imap.uid(
+                    "FETCH", ",".join(uids),
+                    "(BODY.PEEK[HEADER.FIELDS (CONTENT-TYPE CONTENT-TRANSFER-ENCODING MIME-VERSION)] "
+                    "BODY.PEEK[TEXT]<0.%d>)" % size)
+            if typ != "OK":
+                return {}
+        except Exception:
+            return {}
+        out = {}
+        for uid, item in parse_fetch_items(data).items():
+            header = next((v for k, v in item["parts"].items() if k.startswith("HEADER")), b"")
+            body = item["parts"].get("TEXT", b"")
+            out[uid] = snippet_from_raw(header, body)
+        return out
+
+    def folder_counts(self, folders):
+        """{pasta: (não lidas, total)} das pastas da lista, para falar junto do nome.
+        As abas do Gmail e a estrela de mentira são contadas pela busca."""
+        out = {}
+        for f in folders:
+            try:
+                with self.lock:
+                    self._ensure()
+                    view = f.get("filter") or ""
+                    if view:
+                        if view.startswith("category:") and not self.gmail:
+                            continue
+                        self._select("INBOX")
+                        counts = []
+                        for unread in (True, False):
+                            if view.startswith("category:"):
+                                typ, data = self._search_literal(
+                                    [], ("X-GM-RAW", view + (" is:unread" if unread else "")))
+                            else:
+                                typ, data = self.imap.uid("SEARCH", None, "FLAGGED",
+                                                          *(("UNSEEN",) if unread else ()))
+                            if typ != "OK":
+                                break
+                            counts.append(len(data[0].split()) if data and data[0] else 0)
+                        if len(counts) == 2:
+                            out[f["raw"]] = tuple(counts)
+                        continue
+                    typ, data = self.imap.status(quote_folder(f["raw"]), "(MESSAGES UNSEEN)")
+                if typ == "OK":
+                    text = b" ".join(d for d in data if isinstance(d, bytes))
+                    unseen = re.search(rb"UNSEEN (\d+)", text)
+                    total = re.search(rb"MESSAGES (\d+)", text)
+                    if unseen and total:
+                        out[f["raw"]] = (int(unseen.group(1)), int(total.group(1)))
+            except Exception:
+                continue
+        return out
+
+    def change_labels(self, folder_raw, uids, add=(), remove=()):
+        """Põe e tira marcadores do Gmail (nomes como no servidor)."""
+        if not uids:
+            return
+        ids = ",".join(uids)
+        with self.lock:
+            self._ensure()
+            self._select(folder_raw)
+            for sign, names in (("+", add), ("-", remove)):
+                if names:
+                    typ, _ = self.imap.uid("STORE", ids, sign + "X-GM-LABELS",
+                                           "(" + " ".join(quote_folder(n) for n in names) + ")")
+                    if typ != "OK":
+                        raise MailError("Não foi possível mudar os marcadores.")
 
     def _headers_for(self, uids):
         if not uids:
             return []
         ids = b",".join(uids).decode()
-        thread = "X-GM-THRID " if self.gmail else ""
+        thread = "X-GM-THRID X-GM-LABELS " if self.gmail else ""
         typ, data = self.imap.uid(
             "FETCH", ids,
-            "(FLAGS %sBODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])" % thread)
+            "(FLAGS %sBODY.PEEK[HEADER.FIELDS (FROM TO SUBJECT DATE)])" % thread)
         if typ != "OK":
             raise MailError("Falha ao ler os cabeçalhos.")
         return parse_header_fetch(data)
@@ -613,6 +881,63 @@ class MailClient:
                 if typ != "OK":
                     raise MailError("Não foi possível mover para a lixeira.")
             self.imap.uid("STORE", uid, "+FLAGS", "(\\Deleted)")
+            self.imap.expunge()
+
+    def set_flagged(self, folder_raw, uid, flagged=True):
+        """Estrela (no Gmail é a mesma estrela do site)."""
+        with self.lock:
+            self._ensure()
+            self._select(folder_raw)
+            self.imap.uid("STORE", uid, "+FLAGS" if flagged else "-FLAGS", "(\\Flagged)")
+
+    def trash_folder(self):
+        return self._find_special("\\trash", {"trash", "lixeira", "deleted items", "itens excluídos",
+                                              "deleted", "bin"})
+
+    def junk_folder(self):
+        return self._find_special("\\junk", {"spam", "junk", "lixo eletrônico", "junk e-mail",
+                                             "junk email", "bulk mail", "bulk"})
+
+    def archive_folder(self, create=True):
+        """Pasta para arquivar: Arquivo do servidor; no Gmail, Todos os e-mails
+        (sair da caixa de entrada é o que o Gmail chama de arquivar)."""
+        found = self._find_special("\\archive", {"archive", "arquivo", "arquivados", "archives"})
+        if not found and self.gmail:
+            found = self._find_special("\\all", {"all mail", "todos os e-mails"})
+        if not found and create:
+            found = self.create_folder("Archive")
+        return found
+
+    def create_folder(self, name):
+        """Cria a pasta (o nome pode ter acentos) e devolve o nome no servidor."""
+        raw = encode_imap_utf7(name.strip())
+        with self.lock:
+            self._ensure()
+            typ, data = self.imap.create(quote_folder(raw))
+            if typ != "OK":
+                raise MailError("Não foi possível criar a pasta %s." % name)
+        try:
+            self.list_folders()
+        except Exception:
+            pass
+        return raw
+
+    def move(self, folder_raw, uids, dest_raw):
+        """Move as mensagens para outra pasta (MOVE quando o servidor tem)."""
+        if not uids or dest_raw == folder_raw:
+            return
+        ids = ",".join(uids)
+        with self.lock:
+            self._ensure()
+            self._select(folder_raw)
+            if self.can_move:
+                typ, _ = self.imap.uid("MOVE", ids, quote_folder(dest_raw))
+                if typ == "OK":
+                    return
+            typ, _ = self.imap.uid("COPY", ids, quote_folder(dest_raw))
+            if typ != "OK":
+                raise MailError("Não foi possível mover a mensagem.")
+            self.imap.uid("STORE", ids, "+FLAGS", "(\\Deleted)")
             self.imap.expunge()
 
     def delete_permanent(self, folder_raw, uid):

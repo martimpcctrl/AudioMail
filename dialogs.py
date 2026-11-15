@@ -416,7 +416,7 @@ class ReadDialog(wx.Dialog):
 
     def __init__(self, parent, title, text, attachments, announce, sections=None,
                  prefix="", translation=None, auto_translate=False, ai_summary=None,
-                 links=None, unsubscribe=None):
+                 links=None, unsubscribe=None, organize=False, flagged=False):
         super().__init__(parent, title=i18n.tr(title),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.result = None
@@ -479,6 +479,8 @@ class ReadDialog(wx.Dialog):
 
         button("Responder", lambda e: self.finish("reply"))
         button("Responder a todos", lambda e: self.finish("replyall"))
+        if organize:
+            button("Encaminhar", lambda e: self.finish("forward"))
         if translation and sections:
             self.translate_btn = button("Traduzir", self.on_translate)
         if ai_summary:
@@ -491,6 +493,23 @@ class ReadDialog(wx.Dialog):
             button("Abrir anexo", self.on_open_att)
             button("Salvar anexo", self.on_save_att)
             button("Salvar todos os anexos", self.on_save_all)
+        if organize:
+            button("Tirar estrela" if flagged else "Pôr estrela", lambda e: self.finish("star"))
+            button("Arquivar", lambda e: self.finish("archive"))
+            button("Apagar", lambda e: self.finish("delete"))
+            # os mesmos atalhos da janela principal, como nos programas de e-mail
+            keys = [(wx.ACCEL_CTRL, ord("R"), "reply"),
+                    (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("R"), "replyall"),
+                    (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("F"), "forward"),
+                    (wx.ACCEL_CTRL, ord("E"), "archive"),
+                    (wx.ACCEL_CTRL, ord("S"), "star"),
+                    (wx.ACCEL_NORMAL, wx.WXK_DELETE, "delete")]
+            table = []
+            for flags, code, what in keys:
+                ident = wx.NewIdRef()
+                self.Bind(wx.EVT_MENU, lambda e, w=what: self.finish(w), id=ident)
+                table.append((flags, code, ident))
+            self.SetAcceleratorTable(wx.AcceleratorTable(table))
         button("Fechar", None, wx.ID_CANCEL)
         sizer.Add(row, 0, wx.ALL, 10)
         self.SetSizer(sizer)
@@ -1187,6 +1206,13 @@ class ComposeDialog(wx.Dialog):
                                 "Confirmar", wx.YES_NO | wx.ICON_QUESTION, self)
             if ask != wx.YES:
                 self.subject.SetFocus()
+                return False
+        if not self.attach and mt.mentions_attachment(self.body.GetValue()):
+            ask = i18n.message_box("O texto fala de anexo, mas a mensagem não tem nenhum arquivo "
+                                   "anexado. Enviar assim mesmo?\n\nEscolha Não para anexar agora.",
+                                   "Anexo esquecido?", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION, self)
+            if ask != wx.YES:
+                self.on_add(None)
                 return False
         return True
 
