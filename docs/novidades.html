@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Novidades do AudioMail</title>
+<meta name="description" content="O que mudou em cada versão do AudioMail.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Lexend:wght@500;700&display=swap">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+<header class="topo">
+  <div class="faixa">
+    <a class="marca" href="index.html" aria-label="AudioMail, página inicial">
+      <span class="marca-icone" aria-hidden="true"></span>AudioMail
+    </a>
+    <nav aria-label="Páginas do site"><ul class="menu"><li><a href="index.html">Início</a></li><li><a href="manual.html">Manual</a></li><li><a href="novidades.html" aria-current="page">Novidades</a></li><li><a href="privacidade.html">Privacidade</a></li><li><a href="termos.html">Termos de uso</a></li></ul></nav>
+    <a class="botao botao-pequeno" href="https://github.com/martimpcctrl/AudioMail/releases/latest/download/AudioMail-Portatil-1.0.17.zip">Baixar</a>
+  </div>
+  <div class="faixa faixa-busca">
+    <form class="busca" role="search" id="form-busca" action="#">
+      <label for="campo-busca">Buscar no site</label>
+      <div class="busca-linha">
+        <input id="campo-busca" type="search" autocomplete="off"
+               placeholder="Ex.: senha de app, anexo, Ctrl+I, privacidade">
+        <button type="submit" class="botao">Buscar</button>
+      </div>
+      <p id="busca-status" class="busca-status" role="status" aria-live="polite"></p>
+      <ol id="busca-resultados" class="busca-resultados" hidden></ol>
+    </form>
+  </div>
+</header>
+<main id="conteudo" tabindex="-1">
+<div class="faixa documento documento-unico">
+  <article class="texto">
+    <h1>Novidades do AudioMail</h1>
+    <p class="meta">O que mudou em cada versão, da mais nova para a mais antiga.
+      O AudioMail se atualiza sozinho; para baixar, use o botão Baixar.</p>
+    <p id="novidades-status" class="meta" role="status" aria-live="polite"></p>
+    <div id="lista-versoes" class="versoes" data-mais-nova="1.0.17">
+<section aria-labelledby="versao-1-0-17"><h2 id="versao-1-0-17">Versão 1.0.17</h2><p class="meta">17 de novembro de 2026</p>
+<h3>Novidades</h3>
+<ul><li><strong>Notas da versão (Ajuda, Notas da versão):</strong> o que mudou em cada versão, da mais nova para a mais antiga, numa janela para ler com as setas. As notas vêm na hora das versões publicadas; sem internet, aparecem as que vêm dentro do programa.</li><li><strong>O que mudou depois de atualizar:</strong> na primeira vez que o AudioMail abre numa versão nova, ele pergunta se você quer ver as novidades.</li><li><strong>Site oficial (Ajuda, Site do AudioMail):</strong> <a href="https://martimtech.ddns.net/audiomail/docs/">https://martimtech.ddns.net/audiomail/docs/</a>, com o manual, as novidades, a política de privacidade, os termos de uso e uma busca em tudo.</li></ul></section>
+<section aria-labelledby="versao-1-0-16"><h2 id="versao-1-0-16">Versão 1.0.16</h2><p class="meta">15 de novembro de 2026</p>
+<h3>Novidades</h3>
+<ul><li><strong>Ler sem internet:</strong> o AudioMail guarda no computador a lista de cada pasta e o texto das mensagens que você abre. A lista aparece na hora ao trocar de pasta, e sem internet você continua lendo e buscando nas mensagens já abertas. Quando a conexão volta, ele avisa. Ferramentas, Mensagens guardadas no computador: liga e desliga, guarda os anexos também, escolhe de quantos dias guardar e apaga tudo.</li><li><strong>Convites de reunião:</strong> a leitura mostra o assunto, o dia, a hora e o local do convite, com os botões Aceitar convite, Talvez e Recusar convite. A resposta vai ao organizador, e a reunião entra no Calendário do AudioMail.</li><li><strong>Contatos e grupos (Ferramentas):</strong> crie, corrija e apague contatos, e monte grupos como "Família". Na escrita, o <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>K</kbd></span> mostra os grupos, e escolhendo um todos os endereços entram de uma vez.</li><li><strong>Buscar em todas as pastas (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>T</kbd></span>):</strong> mostra quantos resultados cada pasta tem. Enter abre a pasta já com a busca.</li><li><strong>Colar arquivos com <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>V</kbd></span>:</strong> arquivos copiados no Explorador do Windows viram anexo na escrita.</li><li><strong>Imprimir (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>P</kbd></span> na leitura).</strong></li></ul>
+<h3>Correção</h3>
+<ul><li>Contatos com acento no nome (como "Zé") apareciam com letras estranhas na lista de contatos e no campo Para.</li></ul>
+<p>As mensagens guardadas ficam só neste computador, criptografadas pelo Windows, no arquivo mensagens.db. A política de privacidade foi atualizada para explicar isso, então ela aparece de novo para você aceitar.</p></section>
+<section aria-labelledby="versao-1-0-15"><h2 id="versao-1-0-15">Versão 1.0.15</h2><p class="meta">15 de novembro de 2026</p>
+<h3>Novidades</h3>
+<ul><li><strong>Ler anexos dentro do AudioMail (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>L</kbd></span> na leitura):</strong> PDF, Word, Excel, PowerPoint, LibreOffice, RTF, HTML, e-mails anexados e arquivos de texto abrem numa janela para ler com as setas, sem outro programa.</li><li><strong>Descrever imagens com IA:</strong> em fotos e imagens, o Ler anexo pede à IA uma descrição, com todo o texto que estiver na imagem. As imagens que vêm dentro do e-mail também entram na lista de anexos.</li><li><strong>Escrever com IA (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>I</kbd></span> na escrita):</strong> você diz a ideia ("diz que aceito, mas só na sexta") e a IA escreve o texto para você revisar.</li><li><strong>Boletim da caixa (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>I</kbd></span>, ou pelo menu da bandeja):</strong> fala quantas não lidas há e de quem, as abas do Gmail, os lembretes de hoje e as mensagens agendadas.</li><li><strong>Notificação com botões:</strong> Responder, Arquivar e Marcar como lida direto no aviso do Windows (<span class="combo"><kbd>Windows</kbd><span class="plus">+</span><kbd>N</kbd></span>). O menu da bandeja tem as mesmas ações. Para isso, o AudioMail cria um atalho no menu Iniciar.</li><li><strong>Assinatura por conta:</strong> Ferramentas, Assinatura desta conta.</li></ul>
+<p>A descrição de imagens e o Escrever com IA usam a mesma IA e a mesma chave do Resumo com IA, e pedem autorização na primeira vez. A política de privacidade foi atualizada para explicar isso, então ela aparece de novo para você aceitar.</p></section>
+<section aria-labelledby="versao-1-0-14"><h2 id="versao-1-0-14">Versão 1.0.14</h2><p class="meta">15 de novembro de 2026</p>
+<h3>Correções</h3>
+<ul><li><strong>Trocar de pasta ficou rápido de novo.</strong> A prévia do texto e a contagem das pastas agora usam uma conexão separada, e não fazem mais a lista esperar. Passar pelas pastas com as setas também não carrega cada uma: a pasta só carrega quando você para nela.</li><li><strong>A lista de pastas fala as não lidas e o total</strong>, como "Aba Social, 3 não lidas, 120 mensagens". Antes, a contagem ficava presa na fila e não chegava a aparecer.</li><li><strong>Mensagens mais antigas:</strong> ao chegar na última mensagem da lista, o AudioMail carrega mais 100 sozinho e avisa. <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>M</kbd></span> continua funcionando.</li></ul></section>
+<section aria-labelledby="versao-1-0-13"><h2 id="versao-1-0-13">Versão 1.0.13</h2><p class="meta">15 de novembro de 2026</p>
+<h3>Novidades: o AudioMail mais parecido com os programas de e-mail oficiais</h3>
+<p><strong>Organizar</strong></p>
+<ul><li><strong>Encaminhar (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>F</kbd></span>)</strong>, com os anexos.</li><li><strong>Arquivar (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>E</kbd></span>), mover para pasta (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>V</kbd></span>) e spam (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>J</kbd></span>).</strong> A mensagem some da lista na hora e <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Z</kbd></span> traz de volta.</li><li><strong>Estrela (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>S</kbd></span>)</strong> e pasta Com estrela. No Gmail é a mesma estrela do site.</li><li><strong>Apagar com desfazer:</strong> Delete não pergunta mais, porque <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Z</kbd></span> desfaz. Na Lixeira continua perguntando.</li><li><strong>Regras automáticas (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>G</kbd></span>):</strong> mover, marcar como lida, pôr estrela, apagar ou tocar um som próprio.</li><li><strong>Bloquear remetente (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>B</kbd></span>)</strong>, ou um domínio inteiro.</li></ul>
+<p><strong>Lista de mensagens</strong></p>
+<ul><li><strong>Várias de uma vez:</strong> selecione com Shift e as setas, <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Espaço</kbd></span> ou <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>A</kbd></span>, e apague, arquive, mova ou marque todas juntas.</li><li><strong>Mensagens antigas:</strong> na última mensagem, seta para baixo carrega mais 100 (ou <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>M</kbd></span>).</li><li><strong>Não lidas e total de mensagens em cada pasta:</strong> ao passar pelas pastas, o AudioMail fala, por exemplo, "Aba Social, 3 não lidas, 120 mensagens".</li><li><strong>Prévia:</strong> o começo do texto aparece na lista (dá para desligar no menu Mensagem).</li></ul>
+<p><strong>Gmail</strong></p>
+<ul><li><strong>Abas Principal, Promoções, Social, Atualizações e Fóruns</strong> na lista de pastas.</li><li><strong>Marcadores (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>B</kbd></span>):</strong> a mensagem fica na caixa de entrada com o marcador, como no site.</li></ul>
+<p><strong>Buscar e escrever</strong></p>
+<ul><li><strong>Busca avançada (<span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>S</kbd></span>)</strong>, ou escrevendo direto: from:ana, subject:boleto, has:attachment, is:unread, newer_than:7d...</li><li><strong>Aviso de anexo esquecido:</strong> se o texto fala de anexo e nenhum arquivo foi anexado, o AudioMail pergunta antes de enviar.</li><li><strong>A leitura</strong> ganhou os botões Encaminhar, Pôr estrela, Arquivar e Apagar.</li></ul></section>
+<section aria-labelledby="versao-1-0-12"><h2 id="versao-1-0-12">Versão 1.0.12</h2><p class="meta">15 de novembro de 2026</p>
+<ul><li>Corrige o aviso "Informe pelo menos um destinatário" que aparecia mesmo com o Para preenchido, quando Cópia e Cópia oculta estavam vazias.</li><li>Corrige o Responder a todos em mensagens sem cópia.</li></ul></section>
+<section aria-labelledby="versao-1-0-11"><h2 id="versao-1-0-11">Versão 1.0.11</h2><p class="meta">15 de novembro de 2026</p>
+<h3>Novidades</h3>
+<ul><li><strong>E-mails em HTML organizados:</strong> títulos, parágrafos e listas separados, sem o texto escondido das newsletters.</li><li><strong>Links que abrem direto:</strong> cada link aparece no texto como [link 1], [link 2]... <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Enter</kbd></span> abre o link da linha, e a lista Links mostra o texto e o site de destino (Enter abre no navegador).</li><li><strong>Cópia e Cópia oculta escondidas:</strong> são opcionais e não atrapalham mais o Tab. <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>C</kbd></span> mostra e esconde.</li><li><strong>Contatos:</strong> o AudioMail aprende os endereços com quem você troca e-mails e sugere ao digitar no Para. <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>K</kbd></span> abre a busca.</li><li><strong>Respostas prontas:</strong> <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>P</kbd></span> na escrita.</li><li><strong>Desfazer envio:</strong> 10 segundos para <span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>Z</kbd></span> depois de enviar (configurável).</li><li><strong>Agendar envio:</strong> escolha dia e hora; a lista fica em Mensagem, Mensagens agendadas.</li><li><strong>Cancelar inscrição:</strong> botão na leitura de newsletters, sempre com confirmação.</li><li><strong>Outros provedores:</strong> Yahoo, iCloud, Zoho, UOL, BOL, Terra ou servidores escritos à mão. Contas da Microsoft ainda não funcionam.</li></ul></section>
+<section aria-labelledby="versao-1-0-10"><h2 id="versao-1-0-10">Versão 1.0.10</h2><p class="meta">15 de novembro de 2026</p>
+<ul><li>Corrige o erro "Failed to load Python DLL" que aparecia ao reabrir o AudioMail sozinho depois de uma atualização.</li></ul>
+<p>Se o erro aparecer nesta atualização (vindo da 1.0.9), é só abrir o AudioMail de novo: ele já estará na 1.0.10. Das próximas vezes, ele reabre sem erro.</p></section>
+<section aria-labelledby="versao-1-0-9"><h2 id="versao-1-0-9">Versão 1.0.9</h2><p class="meta">15 de novembro de 2026</p>
+<p>Primeira versão do AudioMail publicada no GitHub.</p>
+<ul><li>As atualizações automáticas agora vêm das Releases deste repositório, conferidas pelo SHA-256.</li><li>A política de privacidade foi atualizada para dizer isso; por isso o programa pede o aceite de novo.</li></ul></section>
+
+    </div>
+  </article>
+</div>
+</main>
+<footer class="rodape">
+  <div class="faixa rodape-faixa">
+    <p class="aviso"><strong>Não é um aplicativo oficial.</strong> O AudioMail é um programa independente e gratuito, feito por Martim Alves. Não é um aplicativo oficial do Google (Gmail), da Microsoft (Outlook), do Yahoo, da Apple (iCloud) nem de outro provedor de e-mail, e não tem ligação com essas empresas.</p>
+    <p>AudioMail 1.0.17 · Gratuito, para Windows ·
+      <a href="https://github.com/martimpcctrl/AudioMail">Código e versões no GitHub</a> ·
+      <a href="privacidade.html">Privacidade</a> · <a href="termos.html">Termos de uso</a></p>
+  </div>
+</footer>
+<script src="busca-indice.js"></script>
+<script src="busca.js"></script>
+<script src="novidades.js"></script>
+</body>
+</html>

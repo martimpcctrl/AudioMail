@@ -1,0 +1,100 @@
+# Notas da versão do AudioMail
+
+Copiado das versões publicadas no GitHub (python release_notes.py --atualizar).
+Vai dentro do programa, para as notas aparecerem mesmo sem internet.
+
+## 1.0.17 · 17 de novembro de 2026
+### Novidades
+
+- **Notas da versão (Ajuda, Notas da versão):** o que mudou em cada versão, da mais nova para a mais antiga, numa janela para ler com as setas. As notas vêm na hora das versões publicadas; sem internet, aparecem as que vêm dentro do programa.
+- **O que mudou depois de atualizar:** na primeira vez que o AudioMail abre numa versão nova, ele pergunta se você quer ver as novidades.
+- **Site oficial (Ajuda, Site do AudioMail):** https://martimtech.ddns.net/audiomail/docs/, com o manual, as novidades, a política de privacidade, os termos de uso e uma busca em tudo.
+
+## 1.0.16 · 15 de novembro de 2026
+### Novidades
+
+- **Ler sem internet:** o AudioMail guarda no computador a lista de cada pasta e o texto das mensagens que você abre. A lista aparece na hora ao trocar de pasta, e sem internet você continua lendo e buscando nas mensagens já abertas. Quando a conexão volta, ele avisa. Ferramentas, Mensagens guardadas no computador: liga e desliga, guarda os anexos também, escolhe de quantos dias guardar e apaga tudo.
+- **Convites de reunião:** a leitura mostra o assunto, o dia, a hora e o local do convite, com os botões Aceitar convite, Talvez e Recusar convite. A resposta vai ao organizador, e a reunião entra no Calendário do AudioMail.
+- **Contatos e grupos (Ferramentas):** crie, corrija e apague contatos, e monte grupos como "Família". Na escrita, o Ctrl+K mostra os grupos, e escolhendo um todos os endereços entram de uma vez.
+- **Buscar em todas as pastas (Ctrl+Shift+T):** mostra quantos resultados cada pasta tem. Enter abre a pasta já com a busca.
+- **Colar arquivos com Ctrl+V:** arquivos copiados no Explorador do Windows viram anexo na escrita.
+- **Imprimir (Ctrl+P na leitura).**
+
+### Correção
+
+- Contatos com acento no nome (como "Zé") apareciam com letras estranhas na lista de contatos e no campo Para.
+
+As mensagens guardadas ficam só neste computador, criptografadas pelo Windows, no arquivo mensagens.db. A política de privacidade foi atualizada para explicar isso, então ela aparece de novo para você aceitar.
+
+## 1.0.15 · 15 de novembro de 2026
+### Novidades
+
+- **Ler anexos dentro do AudioMail (Ctrl+L na leitura):** PDF, Word, Excel, PowerPoint, LibreOffice, RTF, HTML, e-mails anexados e arquivos de texto abrem numa janela para ler com as setas, sem outro programa.
+- **Descrever imagens com IA:** em fotos e imagens, o Ler anexo pede à IA uma descrição, com todo o texto que estiver na imagem. As imagens que vêm dentro do e-mail também entram na lista de anexos.
+- **Escrever com IA (Ctrl+Shift+I na escrita):** você diz a ideia ("diz que aceito, mas só na sexta") e a IA escreve o texto para você revisar.
+- **Boletim da caixa (Ctrl+I, ou pelo menu da bandeja):** fala quantas não lidas há e de quem, as abas do Gmail, os lembretes de hoje e as mensagens agendadas.
+- **Notificação com botões:** Responder, Arquivar e Marcar como lida direto no aviso do Windows (Windows+N). O menu da bandeja tem as mesmas ações. Para isso, o AudioMail cria um atalho no menu Iniciar.
+- **Assinatura por conta:** Ferramentas, Assinatura desta conta.
+
+A descrição de imagens e o Escrever com IA usam a mesma IA e a mesma chave do Resumo com IA, e pedem autorização na primeira vez. A política de privacidade foi atualizada para explicar isso, então ela aparece de novo para você aceitar.
+
+## 1.0.14 · 15 de novembro de 2026
+### Correções
+
+- **Trocar de pasta ficou rápido de novo.** A prévia do texto e a contagem das pastas agora usam uma conexão separada, e não fazem mais a lista esperar. Passar pelas pastas com as setas também não carrega cada uma: a pasta só carrega quando você para nela.
+- **A lista de pastas fala as não lidas e o total**, como "Aba Social, 3 não lidas, 120 mensagens". Antes, a contagem ficava presa na fila e não chegava a aparecer.
+- **Mensagens mais antigas:** ao chegar na última mensagem da lista, o AudioMail carrega mais 100 sozinho e avisa. Ctrl+Shift+M continua funcionando.
+
+## 1.0.13 · 15 de novembro de 2026
+### Novidades: o AudioMail mais parecido com os programas de e-mail oficiais
+
+**Organizar**
+- **Encaminhar (Ctrl+Shift+F)**, com os anexos.
+- **Arquivar (Ctrl+E), mover para pasta (Ctrl+Shift+V) e spam (Ctrl+J).** A mensagem some da lista na hora e Ctrl+Z traz de volta.
+- **Estrela (Ctrl+S)** e pasta Com estrela. No Gmail é a mesma estrela do site.
+- **Apagar com desfazer:** Delete não pergunta mais, porque Ctrl+Z desfaz. Na Lixeira continua perguntando.
+- **Regras automáticas (Ctrl+Shift+G):** mover, marcar como lida, pôr estrela, apagar ou tocar um som próprio.
+- **Bloquear remetente (Ctrl+Shift+B)**, ou um domínio inteiro.
+
+**Lista de mensagens**
+- **Várias de uma vez:** selecione com Shift e as setas, Ctrl+Espaço ou Ctrl+A, e apague, arquive, mova ou marque todas juntas.
+- **Mensagens antigas:** na última mensagem, seta para baixo carrega mais 100 (ou Ctrl+Shift+M).
+- **Não lidas e total de mensagens em cada pasta:** ao passar pelas pastas, o AudioMail fala, por exemplo, "Aba Social, 3 não lidas, 120 mensagens".
+- **Prévia:** o começo do texto aparece na lista (dá para desligar no menu Mensagem).
+
+**Gmail**
+- **Abas Principal, Promoções, Social, Atualizações e Fóruns** na lista de pastas.
+- **Marcadores (Ctrl+B):** a mensagem fica na caixa de entrada com o marcador, como no site.
+
+**Buscar e escrever**
+- **Busca avançada (Ctrl+Shift+S)**, ou escrevendo direto: from:ana, subject:boleto, has:attachment, is:unread, newer_than:7d...
+- **Aviso de anexo esquecido:** se o texto fala de anexo e nenhum arquivo foi anexado, o AudioMail pergunta antes de enviar.
+- **A leitura** ganhou os botões Encaminhar, Pôr estrela, Arquivar e Apagar.
+
+## 1.0.12 · 15 de novembro de 2026
+- Corrige o aviso "Informe pelo menos um destinatário" que aparecia mesmo com o Para preenchido, quando Cópia e Cópia oculta estavam vazias.
+- Corrige o Responder a todos em mensagens sem cópia.
+
+## 1.0.11 · 15 de novembro de 2026
+### Novidades
+
+- **E-mails em HTML organizados:** títulos, parágrafos e listas separados, sem o texto escondido das newsletters.
+- **Links que abrem direto:** cada link aparece no texto como [link 1], [link 2]... Ctrl+Enter abre o link da linha, e a lista Links mostra o texto e o site de destino (Enter abre no navegador).
+- **Cópia e Cópia oculta escondidas:** são opcionais e não atrapalham mais o Tab. Ctrl+Shift+C mostra e esconde.
+- **Contatos:** o AudioMail aprende os endereços com quem você troca e-mails e sugere ao digitar no Para. Ctrl+K abre a busca.
+- **Respostas prontas:** Ctrl+Shift+P na escrita.
+- **Desfazer envio:** 10 segundos para Ctrl+Shift+Z depois de enviar (configurável).
+- **Agendar envio:** escolha dia e hora; a lista fica em Mensagem, Mensagens agendadas.
+- **Cancelar inscrição:** botão na leitura de newsletters, sempre com confirmação.
+- **Outros provedores:** Yahoo, iCloud, Zoho, UOL, BOL, Terra ou servidores escritos à mão. Contas da Microsoft ainda não funcionam.
+
+## 1.0.10 · 15 de novembro de 2026
+- Corrige o erro "Failed to load Python DLL" que aparecia ao reabrir o AudioMail sozinho depois de uma atualização.
+
+Se o erro aparecer nesta atualização (vindo da 1.0.9), é só abrir o AudioMail de novo: ele já estará na 1.0.10. Das próximas vezes, ele reabre sem erro.
+
+## 1.0.9 · 15 de novembro de 2026
+Primeira versão do AudioMail publicada no GitHub.
+
+- As atualizações automáticas agora vêm das Releases deste repositório, conferidas pelo SHA-256.
+- A política de privacidade foi atualizada para dizer isso; por isso o programa pede o aceite de novo.

@@ -32,6 +32,7 @@ import offline
 import meetings
 import search_all
 import contacts_dialogs
+import release_notes
 from contacts import Contacts
 from common import data_dir
 from common import (DEFAULTS, config_path, default_sound_path, find_account, forget_password,
@@ -44,7 +45,7 @@ from version import APP_VERSION
 from reminders import ReminderDialog
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
-SITE = "https://martimtech.ddns.net/"
+from common import SITE
 
 
 class Account:
@@ -226,7 +227,8 @@ class TrayIcon(wx.adv.TaskBarIcon):
         return menu
 
 
-class MainFrame(offline.OfflineMixin, meetings.MeetingMixin, search_all.SearchAllMixin,
+class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.MeetingMixin,
+                search_all.SearchAllMixin,
                 inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
     def SetStatusText(self, text, number=0):
         return super().SetStatusText(i18n.tr(text), number)
@@ -320,6 +322,7 @@ class MainFrame(offline.OfflineMixin, meetings.MeetingMixin, search_all.SearchAl
         self.reminder_timer.Start(15000)
         wx.CallAfter(self.start)
         wx.CallLater(20000, self.prune_store_later)
+        wx.CallLater(6000, self.offer_release_notes)
         if not self.cfg.get("reminders_intro_shown", False):
             self.cfg["reminders_intro_shown"] = True
             save_config(self.cfg)
@@ -456,6 +459,8 @@ class MainFrame(offline.OfflineMixin, meetings.MeetingMixin, search_all.SearchAl
 
         m = wx.Menu()
         self.add(m, "Abrir manual\tF1", lambda e: self.open_manual())
+        self.add(m, "Notas da versão", lambda e: self.open_release_notes())
+        self.add(m, "Site do AudioMail", lambda e: self.open_site())
         self.add(m, "Abrir chamado de suporte", lambda e: self.open_ticket())
         self.add(m, "Meus chamados", lambda e: self.open_my_tickets())
         self.add(m, "Privacidade e termos do AudioMail", lambda e: self.open_legal_documents())
@@ -511,6 +516,8 @@ class MainFrame(offline.OfflineMixin, meetings.MeetingMixin, search_all.SearchAl
         if self.pending_update:
             manifest, self.pending_update = self.pending_update, None
             wx.CallAfter(self.show_update_dialog, manifest)
+        elif self.cfg.get("notes_seen_version") != APP_VERSION:
+            wx.CallAfter(self.offer_release_notes)   # atualizou com a janela escondida
 
     def hide_to_tray(self):
         self.Hide()

@@ -17,6 +17,8 @@ except Exception:
 
 APP = "AudioMail"
 
+SITE = "https://martimtech.ddns.net/audiomail/docs/"   # site oficial (manual, novidades, termos)
+
 DEFAULTS = {
     "check_seconds": 60,     # verificacao de reserva
     "realtime": True,        # receber na hora (IMAP IDLE)
@@ -44,6 +46,7 @@ DEFAULTS = {
     "ai_api_keys_enc": {},
     "ai_summary_consent": {},
     "support_tickets": [],
+    "notes_seen_version": None,  # última versão cujas notas já foram oferecidas
     "show_preview": True,       # começo do texto na lista de mensagens
     "offline_enabled": True,     # guardar mensagens no computador (mensagens.db)
     "offline_attachments": False, # guardar também os anexos das mensagens abertas

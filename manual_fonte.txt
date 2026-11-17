@@ -243,6 +243,9 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 - Urgente: a janela abre na hora, mesmo escondido, e não dá para pular.
 - Obrigatória: a versão antiga não funciona mais. Só dá para Atualizar agora ou Fechar o AudioMail.
 - Antes de instalar, o programa confere se o arquivo baixado está íntegro. Depois reinicia sozinho.
+- Ajuda, Notas da versão: o que mudou em cada versão, da mais nova para a mais antiga. As notas vêm do GitHub na hora; sem internet, aparecem as que vieram dentro do programa. O botão Abrir no site abre a página Novidades.
+- Na primeira vez que o AudioMail abre depois de uma atualização, ele pergunta se você quer ver o que mudou.
+- Ajuda, Site do AudioMail abre o site oficial (https://martimtech.ddns.net/audiomail/docs/), com o manual, as novidades, a privacidade e os termos.
 
 ## Modo portátil
 - Esta pasta é portátil: pode ficar em um pendrive ou em qualquer lugar. Os dados do programa ficam na subpasta dados, ao lado do AudioMail.exe, e não no perfil do Windows.

@@ -54,7 +54,9 @@ def pyinstaller_command(here=HERE, python=None, collect_speech=True):
            "--distpath", os.path.join(here, WORK, "dist"),
            "--workpath", os.path.join(here, WORK, "work"),
            "--specpath", os.path.join(here, WORK),
-           "--add-data", os.path.join(here, manual.SOURCE_NAME) + os.pathsep + "."]
+           "--add-data", os.path.join(here, manual.SOURCE_NAME) + os.pathsep + ".",
+           # notas da versão para Ajuda, Notas da versão funcionar sem internet
+           "--add-data", os.path.join(here, "notas_versao.txt") + os.pathsep + "."]
     if collect_speech:
         cmd += ["--collect-all", "accessible_output2"]
     cmd.append(os.path.join(here, "audiomail.py"))

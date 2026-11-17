@@ -1099,6 +1099,28 @@ _TEXT['es'].update({  # 1.0.16
     'Não foi possível imprimir: %s': 'No se pudo imprimir: %s',
 })
 
+_TEXT['en'].update({  # notas da versão
+    'Notas da versão': 'Release notes',
+    'Site do AudioMail': 'AudioMail website',
+    'Abrir no site': 'Open on the website',
+    'O que mudou no AudioMail': "What's new in AudioMail",
+    'Versão %s, %s': 'Version %s, %s',
+    'As notas da versão não foram encontradas. Veja no site: %s': 'The release notes were not found. See the website: %s',
+    'O AudioMail foi atualizado para a versão %s. Quer ver o que mudou?': 'AudioMail was updated to version %s. Do you want to see what changed?',
+    'Buscando as notas da versão': 'Fetching the release notes',
+})
+
+_TEXT['es'].update({  # notas da versão
+    'Notas da versão': 'Notas de la versión',
+    'Site do AudioMail': 'Sitio web de AudioMail',
+    'Abrir no site': 'Abrir en el sitio web',
+    'O que mudou no AudioMail': 'Novedades de AudioMail',
+    'Versão %s, %s': 'Versión %s, %s',
+    'As notas da versão não foram encontradas. Veja no site: %s': 'No se encontraron las notas de la versión. Consulte el sitio web: %s',
+    'O AudioMail foi atualizado para a versão %s. Quer ver o que mudou?': 'AudioMail se actualizó a la versión %s. ¿Quiere ver qué cambió?',
+    'Buscando as notas da versão': 'Buscando las notas de la versión',
+})
+
 _language = "pt"
 
 
