@@ -18,7 +18,8 @@ import release_notes
 from version import APP_VERSION
 
 REPO = "https://github.com/martimpcctrl/AudioMail"
-DOWNLOAD = "%s/releases/latest/download/AudioMail-Portatil-%s.zip" % (REPO, APP_VERSION)
+# link fixo da versão: continua valendo mesmo depois que sair outra (o atualizador cuida do resto)
+DOWNLOAD = "%s/releases/download/v%s/AudioMail-Portatil-%s.zip" % (REPO, APP_VERSION, APP_VERSION)
 RELEASES = REPO + "/releases"
 HERE = os.path.dirname(os.path.abspath(__file__))
 

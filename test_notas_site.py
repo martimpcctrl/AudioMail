@@ -117,7 +117,7 @@ class SiteTest(unittest.TestCase):
 
     def test_download_and_not_official(self):
         home = self.read("index.html")
-        self.assertIn("releases/latest/download/AudioMail-Portatil-", home)
+        self.assertIn("releases/download/v", home)
         self.assertIn("Não é um aplicativo oficial", home)
         self.assertIn("Não é um aplicativo oficial", self.read("termos.html"))   # rodapé em todas
         self.assertTrue(home.startswith("<!doctype html>"))
