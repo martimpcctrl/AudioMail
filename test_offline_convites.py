@@ -16,6 +16,7 @@ import local_store as ls
 import mail_core as mc
 import meetings
 import offline
+import settings_extras
 import printing
 import search_all
 
@@ -494,8 +495,8 @@ class OfflineMixinTest(TempDir):
         self.assertFalse(frame.start_offline({"email": "a@x.com"}, None, OSError()))
 
     def test_days_label(self):
-        self.assertEqual(offline.days_label(0), "Sem limite")
-        self.assertEqual(offline.days_label(90), "Últimos 90 dias")
+        self.assertEqual(settings_extras.days_label(0), "Sem limite")
+        self.assertEqual(settings_extras.days_label(90), "Últimos 90 dias")
 
 
 if __name__ == "__main__":

@@ -3,6 +3,15 @@
 Copiado das versões publicadas no GitHub (python release_notes.py --atualizar).
 Vai dentro do programa, para as notas aparecerem mesmo sem internet.
 
+## 1.0.18 · 17 de novembro de 2026
+### Novidades
+
+- **Bloqueio com PIN (Configurações, Bloqueio com PIN):** o AudioMail pede um PIN de 4 a 8 números para abrir e, se você quiser, ao voltar da bandeja. Arquivo, Bloquear agora (Ctrl+Shift+K) bloqueia na hora. Bloqueado, a notificação diz só "Nova mensagem", sem remetente nem assunto.
+- **Windows Hello:** também dá para desbloquear com o rosto, a digital ou o PIN do Windows. O rosto pelo Windows Hello usa câmera infravermelha e não se engana com foto.
+- **Tudo de configuração em Configurações:** Mensagens guardadas no computador e Assinatura desta conta saíram do menu Ferramentas e viraram seções da janela Configurações. Escolher som e Testar som ficam em Avisos de mensagens novas.
+
+O PIN não fica guardado, e o rosto e a digital ficam só com o Windows. A política de privacidade foi atualizada para explicar isso, então ela aparece de novo para você aceitar.
+
 ## 1.0.17 · 17 de novembro de 2026
 ### Novidades
 

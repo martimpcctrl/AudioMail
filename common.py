@@ -46,6 +46,12 @@ DEFAULTS = {
     "ai_api_keys_enc": {},
     "ai_summary_consent": {},
     "support_tickets": [],
+    "lock_enabled": False,       # pedir PIN para abrir o AudioMail
+    "lock_pin": None,            # só o código derivado do PIN (PBKDF2), nunca o PIN
+    "lock_hello": False,         # também desbloquear com o Windows Hello
+    "lock_after": 0,             # minutos escondido antes de pedir de novo (0 sempre, -1 só ao abrir)
+    "lock_fails": 0,
+    "lock_until": 0,
     "notes_seen_version": None,  # última versão cujas notas já foram oferecidas
     "show_preview": True,       # começo do texto na lista de mensagens
     "offline_enabled": True,     # guardar mensagens no computador (mensagens.db)

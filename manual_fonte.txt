@@ -111,7 +111,7 @@ Ordem do Tab:
 - Usa a IA configurada em Configurações, Resumo com IA, e pergunta antes da primeira vez.
 
 ## Assinatura por conta
-- Ferramentas, Assinatura desta conta: uma assinatura só para a conta que está aberta (por exemplo, a do trabalho). Deixe vazio para essa conta usar a assinatura geral das Configurações.
+- Configurações, Assinatura desta conta: uma assinatura só para a conta que está aberta (por exemplo, a do trabalho). Deixe vazio para essa conta usar a assinatura geral das Configurações.
 
 ## Contatos
 - O AudioMail aprende sozinho os endereços com quem você troca e-mails: quem manda mensagens para você, quem aparece nas mensagens que você abre e, principalmente, para quem você escreve. Na primeira vez de cada conta ele também lê os destinatários das mensagens enviadas.
@@ -181,7 +181,7 @@ Ordem do Tab:
 - Se o computador ligar sem internet, a conta abre do mesmo jeito com o que está guardado, e entra sozinha quando a internet voltar.
 - Sem conexão dá para ler as mensagens que você já abriu antes e buscar nelas. Apagar, mover, responder e enviar precisam de internet.
 - Os anexos não são guardados, a não ser que você ligue essa opção. As mensagens sem anexo ficam guardadas inteiras.
-- Ferramentas, Mensagens guardadas no computador: liga e desliga o recurso, liga a opção de guardar os anexos, escolhe de quantos dias guardar (30, 90, 180, 365 ou sem limite), mostra o espaço usado e tem o botão para apagar tudo.
+- Configurações, Mensagens guardadas no computador: liga e desliga o recurso, liga a opção de guardar os anexos, escolhe de quantos dias guardar (30, 90, 180, 365 ou sem limite), mostra o espaço usado e tem o botão para apagar tudo.
 - Tudo fica no arquivo mensagens.db da pasta de dados, criptografado pelo Windows: copiado para outro computador, não dá para ler. Ao remover uma conta, o que estava guardado dela também é apagado.
 
 ## Conversas
@@ -233,8 +233,23 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 - manter na bandeja ao fechar e ao minimizar;
 - abrir já escondido e iniciar com o Windows;
 - verificar atualizações automaticamente;
-- o som de notificação e a assinatura;
-- o tempo para desfazer o envio.
+- o som de notificação (com os botões Escolher som, Usar som padrão e Testar som) e a assinatura;
+- o tempo para desfazer o envio;
+- o bloqueio com PIN;
+- as mensagens guardadas no computador;
+- a assinatura só da conta que está aberta.
+Cada grupo de opções é um botão que abre e fecha: aperte Espaço nele para ver as opções.
+
+## Bloqueio com PIN
+- Em Configurações, Bloqueio com PIN: marque Pedir PIN para abrir o AudioMail e aperte Criar PIN. O PIN tem de 4 a 8 números e é digitado duas vezes.
+- Ao abrir o AudioMail aparece a janela AudioMail bloqueado. Digite o PIN e aperte Enter. Nada da caixa de entrada aparece antes disso.
+- Pedir o PIN de novo: sempre que a janela voltar da bandeja, depois de 5, 15 ou 60 minutos escondido, ou só ao abrir o AudioMail.
+- Arquivo, Bloquear agora (Ctrl+Shift+K) bloqueia na hora.
+- Também desbloquear com o Windows Hello: a janela de bloqueio ganha o botão Usar Windows Hello, e o Windows confirma com o rosto, a digital ou o PIN do Windows. O rosto pelo Windows Hello usa câmera infravermelha e não se engana com foto. Só aparece se o Windows Hello estiver configurado no computador.
+- Errou o PIN 5 vezes, é preciso esperar 30 segundos; o tempo aumenta se errar de novo.
+- Com o AudioMail bloqueado, a notificação diz só Nova mensagem, sem remetente nem assunto, e o menu da bandeja só tem Abrir e Sair.
+- Esqueci o PIN: com o Windows Hello ligado, dá para confirmar no Windows e criar outro PIN. Sem ele, a única saída é apagar deste computador as contas salvas, as senhas, as mensagens guardadas, os contatos, os lembretes, as mensagens agendadas e as chaves de IA, e entrar de novo. As mensagens continuam no servidor.
+- O PIN não fica guardado: só um código tirado dele que não dá para desfazer. Ele é uma tranca de tela: impede que outra pessoa abra o AudioMail com o Windows desbloqueado, mas não protege contra quem sabe a senha do Windows.
 
 ## Atualizações
 - O programa confere sozinho se há versão nova, ao abrir e a cada 6 horas. Para conferir na hora: Ajuda, Verificar atualizações.
@@ -283,6 +298,7 @@ Aperte Alt e escolha Configurações, Preferências, ou use Ctrl+P. Dá para mud
 - Ctrl+Shift+U: marcar como não lida.
 - Ctrl+Shift+Z: desfazer o envio.
 - Ctrl+M: esconder na bandeja.
+- Ctrl+Shift+K: bloquear agora.
 - Ctrl+P: preferências.
 - F1: abrir este manual.
 - Ctrl+Q: sair de verdade.

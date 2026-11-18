@@ -33,10 +33,11 @@ import meetings
 import search_all
 import contacts_dialogs
 import release_notes
+import app_lock
 from contacts import Contacts
 from common import data_dir
 from common import (DEFAULTS, config_path, default_sound_path, find_account, forget_password,
-                    get_ai_api_key, load_config, make_icon, pick_sound_file, recall_password,
+                    get_ai_api_key, load_config, make_icon, recall_password,
                     protect_local_value, remember_password, save_config, set_ai_api_key,
                     set_autostart, set_name, unprotect_local_value)
 from dialogs import (ComposeDialog, LoginDialog, MyTicketsDialog, ReadDialog, SettingsDialog, TicketDialog, UpdateDialog,
@@ -212,6 +213,12 @@ class TrayIcon(wx.adv.TaskBarIcon):
     def CreatePopupMenu(self):
         menu = wx.Menu()
         f = self.frame
+        if getattr(f, "locked", False):
+            # bloqueado: nada que mostre ou mexa nas mensagens
+            for label, fn in (("Abrir AudioMail", f.restore), ("Sair", f.quit)):
+                item = menu.Append(wx.ID_ANY, i18n.tr(label))
+                menu.Bind(wx.EVT_MENU, lambda e, fn=fn: fn(), item)
+            return menu
         entries = [("Abrir AudioMail", f.restore), ("Verificar agora", f.check_now),
                    ("Boletim da caixa", f.speak_bulletin)]
         if getattr(f, "last_new", None):
@@ -227,7 +234,8 @@ class TrayIcon(wx.adv.TaskBarIcon):
         return menu
 
 
-class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.MeetingMixin,
+class MainFrame(app_lock.AppLockMixin, release_notes.ReleaseNotesMixin, offline.OfflineMixin,
+                meetings.MeetingMixin,
                 search_all.SearchAllMixin,
                 inbox_extras.InboxExtrasMixin, views.ViewsMixin, organize.OrganizeMixin, wx.Frame):
     def SetStatusText(self, text, number=0):
@@ -261,6 +269,7 @@ class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.
         self.pending_sends = []    # envios esperando o tempo de desfazer
         self.pending_moves = []    # mover/apagar esperando o tempo de desfazer
         self.folder_timer = None   # espera parar numa pasta antes de carregar
+        self.hidden_at = None      # quando a janela foi para a bandeja (para pedir o PIN de novo)
         self.sending_scheduled = set()
 
         sounds.ensure_default(default_sound_path())
@@ -298,6 +307,9 @@ class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.
         sizer.Add(lbl_list, 0, wx.LEFT, 8)
         sizer.Add(self.list, 1, wx.EXPAND | wx.ALL, 8)
         panel.SetSizer(sizer)
+        self.locked = self.lock_enabled()   # com PIN, nada aparece antes de desbloquear
+        if self.locked:
+            panel.Hide()
         self.CreateStatusBar()
         self.update_account_ui()
 
@@ -339,9 +351,26 @@ class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.
         return default_sound_path()
 
     def open_settings(self):
-        dlg = SettingsDialog(self, {k: self.setting(k) for k in DEFAULTS})
+        if self.locked:
+            self.restore()
+            return
+        entry = find_account(self.cfg, self.active.email) if self.active else None
+        info = {"store_size": self.offline_store_size(), "hello": app_lock.hello_available(),
+                "has_pin": bool(self.cfg.get("lock_pin")),
+                "account_email": self.active.email if entry else "",
+                "account_signature": (entry or {}).get("signature", "")}
+        dlg = SettingsDialog(self, {k: self.setting(k) for k in DEFAULTS}, info)
         if dlg.ShowModal() == wx.ID_OK:
             new = dlg.get_settings()
+            new_pin = new.pop("_new_pin", None)
+            clear_offline = new.pop("_offline_clear", False)
+            account_signature = new.pop("_account_signature", None)
+            was_offline = self.setting("offline_enabled")
+            if new_pin:
+                self.cfg["lock_pin"] = app_lock.hash_pin(new_pin)
+                self.cfg["lock_fails"] = self.cfg["lock_until"] = 0
+            if account_signature is not None and entry is not None:
+                entry["signature"] = account_signature
             entered_api_key = new.pop("_ai_api_key", "")
             remove_api_key = new.pop("_ai_remove_key", False)
             selected_provider = new.get("ai_summary_provider", "openai")
@@ -365,22 +394,13 @@ class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.
                 self.start_watcher(acc)
             self.apply_timer()
             self.apply_update_timer()
+            self.apply_offline_settings(was_offline, clear_offline)
             if new["autostart"] != old_autostart and not set_autostart(new["autostart"]):
                 i18n.message_box("Não foi possível alterar o início com o Windows.",
                               "Aviso", wx.OK | wx.ICON_WARNING, self)
             self.announce("Configurações salvas.")
         dlg.Destroy()
 
-    def choose_sound(self):
-        path = pick_sound_file(self)
-        if path:
-            self.cfg["sound_file"] = path
-            save_config(self.cfg)
-            sounds.play(path)
-            self.announce("Som de notificação alterado.")
-
-    def test_sound(self):
-        sounds.play(self.sound_path())
 
     def announce(self, text, box=False):
         """Mostra na barra de status e fala pelo leitor de tela; sem fala, pode abrir um aviso."""
@@ -410,6 +430,7 @@ class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.
         self.add(m, "Adicionar conta", lambda e: self.ask_login(blank=True))
         self.add(m, "Remover conta atual", lambda e: self.remove_account())
         self.add(m, "Esconder na bandeja\tCtrl+M", lambda e: self.hide_to_tray())
+        self.add(m, "Bloquear agora\tCtrl+Shift+K", lambda e: self.lock_now())
         m.AppendSeparator()
         self.add(m, "Sair\tCtrl+Q", lambda e: self.quit())
         bar.Append(m, i18n.tr("&Arquivo"))
@@ -447,14 +468,10 @@ class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.
 
         m = wx.Menu()
         self.add(m, "Configurações\tCtrl+P", lambda e: self.open_settings())
-        self.add(m, "Escolher som de notificação", lambda e: self.choose_sound())
-        self.add(m, "Testar som", lambda e: self.test_sound())
         self.add(m, "Calendário", lambda e: self.open_reminders())
         self.add(m, "Contatos e grupos...", lambda e: self.open_contacts())
-        self.add(m, "Mensagens guardadas no computador...", lambda e: self.open_offline_settings())
         self.add(m, "Regras\tCtrl+Shift+G", lambda e: self.open_rules())
         self.add(m, "Remetentes bloqueados", lambda e: self.open_blocked())
-        self.add(m, "Assinatura desta conta...", lambda e: self.edit_account_signature())
         bar.Append(m, i18n.tr("&Ferramentas"))
 
         m = wx.Menu()
@@ -509,9 +526,13 @@ class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.
         threading.Thread(target=listen, daemon=True).start()
 
     def restore(self):
+        self.lock_if_due()
         self.Show()
         self.Iconize(False)
         self.Raise()
+        if self.locked:
+            wx.CallAfter(self.ask_unlock)
+            return
         self.list.SetFocus()
         if self.pending_update:
             manifest, self.pending_update = self.pending_update, None
@@ -520,6 +541,7 @@ class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.
             wx.CallAfter(self.offer_release_notes)   # atualizou com a janela escondida
 
     def hide_to_tray(self):
+        self.note_hidden()
         self.Hide()
         if not self.cfg.get("tray_hint_shown"):
             self.cfg["tray_hint_shown"] = True
@@ -528,6 +550,8 @@ class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.
                        "Para abrir de novo, aperte Windows mais B, escolha o ícone e aperte Enter.")
 
     def on_iconize(self, evt):
+        if evt.IsIconized():
+            self.note_hidden()
         if evt.IsIconized() and self.setting("minimize_tray"):
             wx.CallAfter(self.hide_to_tray)
         evt.Skip()
@@ -748,7 +772,13 @@ class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.
         title, text = mc.format_notification(new)
         if len(self.accounts) > 1:
             text = "%s (%s)" % (text, acc.email)
-        if self.setting("notify"):
+        if self.locked:
+            # bloqueado: não diz quem mandou nem o assunto, e a notificação não tem botões
+            title = "AudioMail"
+            text = i18n.tr("Nova mensagem") if len(new) == 1 else i18n.tr("%d novas mensagens") % len(new)
+            if self.setting("notify"):
+                self.toast(title, text)
+        elif self.setting("notify"):
             self.toast_new(acc, new, title, text)
         else:
             self.last_new = (acc, [m["uid"] for m in new])
@@ -995,6 +1025,10 @@ class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.
         if auto:
             if not self.setting("start_hidden"):
                 self.Show()
+                if self.locked:
+                    self.ask_unlock()          # o PIN vem antes de qualquer conta
+                    if self.quitting:
+                        return
             active = self.cfg.get("active_email")
             auto.sort(key=lambda t: t[0]["email"] != active)  # a ultima conta ativa primeiro
             for a, pw in auto:
@@ -1002,6 +1036,10 @@ class MainFrame(release_notes.ReleaseNotesMixin, offline.OfflineMixin, meetings.
                               "provider": a.get("provider") or "gmail", "server": a.get("server")})
         else:
             self.Show()
+            if self.locked:
+                self.ask_unlock()
+                if self.quitting:
+                    return
             self.ask_login()
 
     def ask_login(self, email="", blank=False):

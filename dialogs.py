@@ -18,6 +18,7 @@ import support
 import compose_extras as cx
 import providers
 import contacts as ct
+import settings_extras
 from common import default_sound_path, get_ai_api_key, pick_sound_file, set_name
 
 
@@ -183,7 +184,7 @@ class SettingsDialog(wx.Dialog):
     INTERVALS = [(30, "30 segundos"), (60, "1 minuto"), (120, "2 minutos"),
                  (300, "5 minutos"), (600, "10 minutos")]
 
-    def __init__(self, parent, settings):
+    def __init__(self, parent, settings, info=None):
         super().__init__(parent, title=i18n.tr("Configurações"))
         self.SetMinSize((560, -1))
         self.settings = settings
@@ -324,17 +325,25 @@ class SettingsDialog(wx.Dialog):
         self.undo_send.SetSelection(self.undo_choices.index(current) if current in self.undo_choices else 2)
         group.Add(self.undo_send, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
+        # bloqueio com PIN, mensagens guardadas e assinatura da conta (antes no menu Ferramentas)
+        self.extras = settings_extras.SettingsExtras(self, section, check, settings, info or {})
+
         scroll.SetSizer(content)
         outer.Add(scroll, 1, wx.EXPAND | wx.ALL, 8)
         buttons = self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL)
         self.FindWindowById(wx.ID_OK).SetLabel(i18n.tr("Salvar"))
         self.FindWindowById(wx.ID_CANCEL).SetLabel(i18n.tr("Cancelar"))
+        self.FindWindowById(wx.ID_OK).Bind(wx.EVT_BUTTON, self.on_save)
         outer.Add(buttons, 0, wx.EXPAND | wx.ALL, 8)
         self.SetSizer(outer)
         self.SetSize((600, 680))
         self.SetMinSize((560, 500))
         self.CentreOnParent()
         self.ui_language.SetFocus()
+
+    def on_save(self, evt):
+        if self.extras.validate():
+            evt.Skip()
 
     def show_sound(self):
         self.sound_text.SetValue(self.sound_file if self.sound_file else i18n.tr("Padrão"))
@@ -377,7 +386,7 @@ class SettingsDialog(wx.Dialog):
         sounds.play(self.effective_sound())
 
     def get_settings(self):
-        return {
+        return dict(self.extras.values(), **{
             "check_seconds": self.INTERVALS[self.interval.GetSelection()][0],
             "realtime": self.realtime.GetValue(),
             "notify": self.notify.GetValue(),
@@ -399,7 +408,7 @@ class SettingsDialog(wx.Dialog):
             "ai_summary_endpoint": self.ai_endpoint.GetValue().strip(),
             "_ai_api_key": self.ai_api_key.GetValue().strip(),
             "_ai_remove_key": self.ai_remove_key.GetValue(),
-        }
+        })
 
 
 # ---------- leitura ----------

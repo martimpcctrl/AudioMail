@@ -9,7 +9,7 @@ import wx.adv
 import i18n
 import bulletin
 import speech
-from common import find_account, save_config
+from common import find_account
 
 EVT_NOTIFICATION_ACTION = wx.PyEventBinder(wx.adv.wxEVT_NOTIFICATION_MESSAGE_ACTION, 1)
 EVT_NOTIFICATION_CLICK = wx.PyEventBinder(wx.adv.wxEVT_NOTIFICATION_MESSAGE_CLICK, 1)
@@ -34,27 +34,11 @@ class InboxExtrasMixin:
         own = (entry or {}).get("signature", "").strip()
         return own or self.setting("signature").strip()
 
-    def edit_account_signature(self):
-        acc = self.active
-        if not acc:
-            return
-        entry = find_account(self.cfg, acc.email)
-        if entry is None:
-            return
-        dlg = wx.TextEntryDialog(
-            self, i18n.tr("Assinatura usada só na conta %s. Deixe vazio para usar a assinatura geral "
-                          "das Configurações.") % acc.email,
-            i18n.tr("Assinatura desta conta"), entry.get("signature", ""),
-            style=wx.TextEntryDialogStyle | wx.TE_MULTILINE)
-        if dlg.ShowModal() == wx.ID_OK:
-            entry["signature"] = dlg.GetValue().strip()
-            save_config(self.cfg)
-            self.announce("Assinatura da conta salva." if entry["signature"]
-                          else "Esta conta vai usar a assinatura geral.")
-        dlg.Destroy()
-
     # ---------- boletim falado ----------
     def speak_bulletin(self):
+        if getattr(self, "locked", False):
+            self.announce("O AudioMail está bloqueado.")
+            return
         accounts = [a for a in self.accounts if a.client]
         if not accounts:
             self.announce("Nenhuma conta conectada.")

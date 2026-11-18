@@ -17,9 +17,8 @@ import local_store as ls
 import mail_core as mc
 import organize
 import secure
-from common import data_dir, save_config, set_name
+from common import data_dir
 
-DAY_CHOICES = (30, 90, 180, 365, 0)     # 0 = sem limite
 RETRY_MS = 60000
 
 
@@ -176,91 +175,28 @@ class OfflineMixin:
 
         threading.Thread(target=work, daemon=True).start()
 
-    def open_offline_settings(self):
-        store = self.store or ls.LocalStore(os.path.join(data_dir(), "mensagens.db"))
-        dlg = OfflineSettingsDialog(self, self.setting("offline_enabled"),
-                                    self.setting("offline_attachments"),
-                                    int(self.setting("offline_days") or 0), store.size())
-        ok = dlg.ShowModal() == wx.ID_OK
-        clear = dlg.clear_requested
-        enabled, attachments, days = dlg.values()
-        dlg.Destroy()
+    def apply_offline_settings(self, was_enabled, clear):
+        """Depois de salvar as Configurações: apagar o guardado, se pedido, e fechar o arquivo
+        quando o recurso foi desligado (perguntando se apaga o que já está guardado)."""
+        store = getattr(self, "_store", None) or ls.LocalStore(os.path.join(data_dir(), "mensagens.db"))
         if clear:
             store.clear()
             self._store = None
             self.announce("As mensagens guardadas no computador foram apagadas.")
-        if not ok:
-            return
-        was = self.setting("offline_enabled")
-        self.cfg.update({"offline_enabled": enabled, "offline_attachments": attachments,
-                         "offline_days": days})
-        save_config(self.cfg)
-        if was and not enabled and store.size():
+        elif was_enabled and not self.setting("offline_enabled") and store.size():
             answer = i18n.message_box("Apagar também as mensagens que já estão guardadas no computador?",
                                       "Mensagens guardadas no computador",
                                       wx.YES_NO | wx.ICON_QUESTION, self)
             if answer == wx.YES:
                 store.clear()
                 self._store = None
-        if not enabled and getattr(self, "_store", None) is not None:
+        if not self.setting("offline_enabled") and getattr(self, "_store", None) is not None:
             self._store.close()
             self._store = None
         self.prune_store_later()
-        self.announce("Configurações salvas.")
 
-
-def days_label(days):
-    return i18n.tr("Sem limite") if not days else i18n.tr("Últimos %d dias") % days
-
-
-class OfflineSettingsDialog(wx.Dialog):
-    def __init__(self, parent, enabled, attachments, days, size):
-        super().__init__(parent, title=i18n.tr("Mensagens guardadas no computador"))
-        self.clear_requested = False
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        self.enabled = wx.CheckBox(self, label=i18n.tr(
-            "Guardar as mensagens no computador, para a lista abrir na hora e para ler sem internet"))
-        self.enabled.SetValue(bool(enabled))
-        sizer.Add(self.enabled, 0, wx.ALL, 10)
-        self.attachments = wx.CheckBox(self, label=i18n.tr(
-            "Guardar também os anexos das mensagens abertas (ocupa mais espaço)"))
-        self.attachments.SetValue(bool(attachments))
-        sizer.Add(self.attachments, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
-        label = i18n.tr("Guardar as mensagens de")
-        sizer.Add(wx.StaticText(self, label=label), 0, wx.LEFT, 10)
-        self.days = set_name(wx.Choice(self, choices=[days_label(d) for d in DAY_CHOICES]), label)
-        self.days.SetSelection(DAY_CHOICES.index(days) if days in DAY_CHOICES else 1)
-        sizer.Add(self.days, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
-        sizer.Add(wx.StaticText(self, label=i18n.tr("Espaço usado agora: %s") % mc.format_size(size)),
-                  0, wx.ALL, 10)
-        sizer.Add(wx.StaticText(self, label=i18n.tr(
-            "Tudo fica só neste computador, criptografado pelo Windows, e não é enviado a ninguém.")),
-            0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
-        clear = wx.Button(self, label=i18n.tr("Apagar todas as mensagens guardadas"))
-        clear.Bind(wx.EVT_BUTTON, self.on_clear)
-        clear.Enable(size > 0)
-        sizer.Add(clear, 0, wx.LEFT | wx.BOTTOM, 10)
-        sizer.Add(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL), 0, wx.EXPAND | wx.ALL, 10)
-        self.enabled.Bind(wx.EVT_CHECKBOX, lambda e: self.update_state())
-        self.SetSizerAndFit(sizer)
-        self.CentreOnParent()
-        self.update_state()
-        self.enabled.SetFocus()
-
-    def update_state(self):
-        on = self.enabled.GetValue()
-        self.attachments.Enable(on)
-        self.days.Enable(on)
-
-    def on_clear(self, evt=None):
-        answer = i18n.message_box("Apagar todas as mensagens guardadas no computador? As mensagens "
-                                  "continuam no servidor; só a cópia deste computador é apagada.",
-                                  "Mensagens guardadas no computador",
-                                  wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION, self)
-        if answer == wx.YES:
-            self.clear_requested = True
-            evt.GetEventObject().Enable(False)
-
-    def values(self):
-        return (self.enabled.GetValue(), self.attachments.GetValue(),
-                DAY_CHOICES[max(0, self.days.GetSelection())])
+    def offline_store_size(self):
+        try:
+            return os.path.getsize(os.path.join(data_dir(), "mensagens.db"))
+        except OSError:
+            return 0

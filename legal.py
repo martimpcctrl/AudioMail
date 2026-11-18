@@ -8,13 +8,13 @@ import i18n
 
 # Altere este identificador sempre que o texto legal mudar. Usuarios existentes
 # que ainda nao o aceitaram voltarao a ver a tela obrigatoria.
-LEGAL_VERSION = "2026-11-15-3"
+LEGAL_VERSION = "2026-11-17-1"
 CONTACT_EMAIL = "martimpc318@gmail.com"
 
 DOCUMENTS = {
     "pt": {
         "privacy": ("Política de privacidade", """POLÍTICA DE PRIVACIDADE DO AUDIOMAIL
-Versão 4 — 15 de novembro de 2026
+Versão 5 — 17 de novembro de 2026
 
 1. Quem responde e como falar
 Martim Alves é o responsável pelo AudioMail. Para exercer direitos sobre dados ou fazer perguntas de privacidade, escreva para martimpc318@gmail.com. Também é possível abrir um chamado em Ajuda > Abrir chamado de suporte.
@@ -22,7 +22,8 @@ Martim Alves é o responsável pelo AudioMail. Para exercer direitos sobre dados
 2. O que o AudioMail trata
 • Dados da conta de e-mail que você informa (endereço e senha de aplicativo). A senha só é salva se você escolher lembrá-la e é protegida pelas funções de segurança do Windows neste usuário e computador. As configurações, preferências, lembretes, chaves de API de IA cifradas e protocolos dos chamados ficam no computador ou na pasta portátil, conforme a instalação.
 • Mensagens, contatos, anexos e pastas são obtidos do provedor de e-mail para mostrar as funções solicitadas. O AudioMail não envia cópias dessas mensagens ao responsável pelo aplicativo.
-• Para a lista abrir na hora e para ler sem internet, o AudioMail guarda neste computador, no arquivo mensagens.db da pasta de dados, a lista de pastas, a lista de mensagens de cada pasta e o texto das mensagens que você abre (os anexos só se você ligar essa opção). O arquivo é criptografado pela proteção do Windows deste usuário e computador e não é enviado a ninguém. Em Ferramentas > Mensagens guardadas no computador você desliga o recurso, escolhe por quantos dias guardar e apaga tudo; ao remover uma conta, o que estava guardado dela também é apagado. Os contatos e grupos que você cria ficam no arquivo contatos.json, também só neste computador.
+• Para a lista abrir na hora e para ler sem internet, o AudioMail guarda neste computador, no arquivo mensagens.db da pasta de dados, a lista de pastas, a lista de mensagens de cada pasta e o texto das mensagens que você abre (os anexos só se você ligar essa opção). O arquivo é criptografado pela proteção do Windows deste usuário e computador e não é enviado a ninguém. Em Configurações > Mensagens guardadas no computador você desliga o recurso, escolhe por quantos dias guardar e apaga tudo; ao remover uma conta, o que estava guardado dela também é apagado. Os contatos e grupos que você cria ficam no arquivo contatos.json, também só neste computador.
+• Se você ligar o bloqueio com PIN, o PIN não é guardado: fica só, nas configurações deste computador, um código derivado dele que não permite descobrir o PIN. Se ligar o Windows Hello, a verificação do rosto, da digital ou do PIN do Windows é feita pelo próprio Windows; o AudioMail só recebe a resposta "confirmado" ou "não confirmado" e nunca recebe nem guarda imagens do rosto ou digitais.
 • Se você abrir um chamado, o aplicativo envia ao servidor de suporte o assunto, tipo, texto do chamado e versão do AudioMail. O chamado é armazenado no painel de suporte para atendimento. Não são enviados automaticamente e-mail da conta, mensagens ou anexos. O servidor e o provedor de hospedagem podem tratar dados técnicos da conexão, como endereço IP, para entregar e proteger o serviço.
 • Se você pedir um resumo com IA, o conteúdo da mensagem ou conversa escolhido e as instruções do resumo são enviados ao provedor selecionado (OpenAI, Google Gemini ou endpoint compatível que você configurar), com a chave de API que você forneceu. O provedor trata os dados conforme seus próprios termos e políticas; não informe conteúdo que não queira compartilhar com esse provedor. A chave fica cifrada localmente. O recurso só envia conteúdo quando você pede e confirma autorização.
 • Do mesmo jeito, se você pedir a descrição de uma imagem (anexo ou imagem dentro do e-mail), a imagem é enviada a esse provedor; e se usar Escrever com IA, o que você escreveu como ideia e a mensagem que está sendo respondida são enviados a ele. Cada recurso pede autorização na primeira vez. Os anexos lidos como texto (PDF, Word, Excel...) são lidos no seu computador e não são enviados a ninguém.
@@ -69,7 +70,7 @@ Aplicam-se as leis da República Federativa do Brasil, preservadas as regras obr
     },
     "en": {
         "privacy": ("Privacy policy", """AUDIOMAIL PRIVACY POLICY
-Version 4 — November 15, 2026
+Version 5 — November 17, 2026
 
 1. Who is responsible and how to contact us
 Martim Alves is responsible for AudioMail. For privacy questions or requests about personal data, email martimpc318@gmail.com. You can also open a ticket at Help > Open support ticket.
@@ -77,7 +78,8 @@ Martim Alves is responsible for AudioMail. For privacy questions or requests abo
 2. Data AudioMail handles
 • The email account details you enter (address and app password). The password is saved only if you choose to remember it and is protected using Windows security for this user and computer. Settings, preferences, local reminders, encrypted AI API keys and ticket references are stored on your computer or portable folder, depending on your setup.
 • Messages, contacts, attachments and folders are obtained from your email provider to provide requested features. AudioMail does not send copies of those messages to the app maintainer.
-• So the list opens instantly and you can read without internet, AudioMail saves on this computer, in the mensagens.db file in the data folder, the folder list, the message list of each folder and the text of the messages you open (attachments only if you turn that option on). The file is encrypted by Windows protection for this user and computer and is not sent to anyone. In Tools > Messages saved on this computer you can turn the feature off, choose how many days to keep and delete everything; removing an account also deletes what was saved for it. The contacts and groups you create are kept in the contatos.json file, also only on this computer.
+• So the list opens instantly and you can read without internet, AudioMail saves on this computer, in the mensagens.db file in the data folder, the folder list, the message list of each folder and the text of the messages you open (attachments only if you turn that option on). The file is encrypted by Windows protection for this user and computer and is not sent to anyone. In Settings > Messages saved on this computer you can turn the feature off, choose how many days to keep and delete everything; removing an account also deletes what was saved for it. The contacts and groups you create are kept in the contatos.json file, also only on this computer.
+• If you turn on the PIN lock, the PIN itself is not stored: only a code derived from it, which does not reveal the PIN, is kept in this computer's settings. If you turn on Windows Hello, Windows itself checks your face, fingerprint or Windows PIN; AudioMail only receives "confirmed" or "not confirmed" and never receives or stores face images or fingerprints.
 • When you submit a support ticket, the app sends its subject, type, text and AudioMail version to the support server. Tickets are stored in the support panel. Your email account, messages and attachments are not sent automatically. The server and hosting provider may process technical connection data, such as IP address, to deliver and protect the service.
 • When you request an AI summary, the selected message or conversation and summary instructions are sent to your chosen provider (OpenAI, Google Gemini or a compatible endpoint you configure), using your API key. The provider processes data under its own terms and policies. Do not submit content you do not wish to share with that provider. The key is encrypted locally. Content is sent only when you request a summary and authorize it.
 • In the same way, if you ask for an image description (an attachment or an image inside an email), the image is sent to that provider; and if you use Write with AI, the idea you typed and the message you are replying to are sent to it. Each feature asks for permission the first time. Attachments read as text (PDF, Word, Excel...) are read on your computer and are not sent to anyone.
@@ -124,7 +126,7 @@ The laws of the Federative Republic of Brazil apply, while mandatory consumer an
     },
     "es": {
         "privacy": ("Política de privacidad", """POLÍTICA DE PRIVACIDAD DE AUDIOMAIL
-Versión 4 — 15 de noviembre de 2026
+Versión 5 — 17 de noviembre de 2026
 
 1. Responsable y contacto
 Martim Alves es responsable de AudioMail. Para consultas de privacidad o solicitudes sobre datos personales, escribe a martimpc318@gmail.com. También puedes abrir una solicitud en Ayuda > Abrir solicitud de soporte.
@@ -132,7 +134,8 @@ Martim Alves es responsable de AudioMail. Para consultas de privacidad o solicit
 2. Datos tratados por AudioMail
 • Los datos de la cuenta de correo que ingresas (dirección y contraseña de aplicación). La contraseña solo se guarda si eliges recordarla y queda protegida por las funciones de seguridad de Windows para este usuario y equipo. La configuración, preferencias, recordatorios locales, claves API de IA cifradas y referencias de solicitudes se guardan en el equipo o carpeta portátil.
 • Los mensajes, contactos, archivos adjuntos y carpetas se obtienen del proveedor de correo para ofrecer las funciones solicitadas. AudioMail no envía copias de esos mensajes al responsable de la aplicación.
-• Para que la lista se abra al instante y para leer sin internet, AudioMail guarda en este equipo, en el archivo mensagens.db de la carpeta de datos, la lista de carpetas, la lista de mensajes de cada carpeta y el texto de los mensajes que abre (los adjuntos solo si activa esa opción). El archivo está cifrado por la protección de Windows de este usuario y equipo y no se envía a nadie. En Herramientas > Mensajes guardados en el equipo puede desactivar la función, elegir cuántos días guardar y eliminarlo todo; al quitar una cuenta, también se elimina lo que estaba guardado de ella. Los contactos y grupos que crea se guardan en el archivo contatos.json, también solo en este equipo.
+• Para que la lista se abra al instante y para leer sin internet, AudioMail guarda en este equipo, en el archivo mensagens.db de la carpeta de datos, la lista de carpetas, la lista de mensajes de cada carpeta y el texto de los mensajes que abre (los adjuntos solo si activa esa opción). El archivo está cifrado por la protección de Windows de este usuario y equipo y no se envía a nadie. En Configuración > Mensajes guardados en el equipo puede desactivar la función, elegir cuántos días guardar y eliminarlo todo; al quitar una cuenta, también se elimina lo que estaba guardado de ella. Los contactos y grupos que crea se guardan en el archivo contatos.json, también solo en este equipo.
+• Si activa el bloqueo con PIN, el PIN no se guarda: solo se conserva, en la configuración de este equipo, un código derivado que no permite descubrir el PIN. Si activa Windows Hello, la verificación del rostro, la huella o el PIN de Windows la hace el propio Windows; AudioMail solo recibe "confirmado" o "no confirmado" y nunca recibe ni guarda imágenes del rostro ni huellas.
 • Al enviar una solicitud de soporte, la aplicación envía su asunto, tipo, texto y versión de AudioMail al servidor de soporte. Las solicitudes se guardan en el panel de soporte. La cuenta de correo, los mensajes y los archivos adjuntos no se envían automáticamente. El servidor y el proveedor de alojamiento pueden tratar datos técnicos de conexión, como la dirección IP, para prestar y proteger el servicio.
 • Al pedir un resumen con IA, el mensaje o conversación seleccionados y las instrucciones se envían al proveedor elegido (OpenAI, Google Gemini o un endpoint compatible que configures), usando tu clave API. El proveedor trata los datos según sus propios términos y políticas. No envíes contenido que no quieras compartir con ese proveedor. La clave se cifra localmente. El contenido solo se envía cuando pides el resumen y lo autorizas.
 • Del mismo modo, si pides la descripción de una imagen (un adjunto o una imagen dentro del correo), la imagen se envía a ese proveedor; y si usas Escribir con IA, la idea que escribiste y el mensaje que respondes se envían a él. Cada función pide autorización la primera vez. Los adjuntos leídos como texto (PDF, Word, Excel...) se leen en tu equipo y no se envían a nadie.
