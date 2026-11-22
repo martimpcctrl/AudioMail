@@ -303,5 +303,66 @@ class MainWindowTest(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+class ApiKeyButtonTest(unittest.TestCase):
+    def test_button_follows_provider(self):
+        frame = wx.Frame(None)
+        values = {k: audiomail.DEFAULTS[k] for k in audiomail.DEFAULTS}
+        dlg = dialogs.SettingsDialog(frame, values, {})
+        self.assertEqual(dlg.ai_key_page.GetLabel(), "Conseguir a chave de API da OpenAI (abre o site)")
+        opened = []
+        old = dialogs.webbrowser.open
+        dialogs.webbrowser.open = lambda url: opened.append(url) or True
+        try:
+            dlg.on_ai_key_page()
+            dlg.ai_provider.SetSelection(1)
+            dlg.on_ai_provider(types.SimpleNamespace(Skip=lambda: None))
+            self.assertIn("Google Gemini", dlg.ai_key_page.GetLabel())
+            dlg.on_ai_key_page()
+            dlg.ai_provider.SetSelection(2)
+            dlg.on_ai_provider(types.SimpleNamespace(Skip=lambda: None))
+            self.assertFalse(dlg.ai_key_page.IsEnabled())
+            dlg.on_ai_key_page()            # serviço compatível: não abre nada
+        finally:
+            dialogs.webbrowser.open = old
+        self.assertEqual(opened, ["https://platform.openai.com/api-keys", "https://aistudio.google.com/apikey"])
+        dlg.Destroy()
+        frame.Destroy()
+
+
+class GeminiKeyRulesTest(unittest.TestCase):
+    def test_key_problem_words(self):
+        import ai_summary
+        self.assertTrue(ai_summary.gemini_key_problem("erro 400: API key not valid. Please pass a valid API key."))
+        self.assertTrue(ai_summary.gemini_key_problem("erro 403: Requests from unrestricted keys are blocked"))
+        self.assertFalse(ai_summary.gemini_key_problem("erro 429: Resource has been exhausted"))
+
+    def test_rejected_key_gets_explained(self):
+        import ai_summary
+        old = ai_summary._request
+
+        def refuse(url, headers, payload):
+            raise ai_summary.SummaryError("A API de IA respondeu com erro 400: API key not valid.")
+
+        ai_summary._request = refuse
+        try:
+            with self.assertRaises(ai_summary.SummaryError) as e:
+                ai_summary.ask("gemini", "chave", "gemini-3.8-flash", "", "sistema", "texto")
+        finally:
+            ai_summary._request = old
+        self.assertIn("aistudio.google.com/apikey", str(e.exception))
+        self.assertIn("API key not valid", str(e.exception))
+
+    def test_hint_only_for_gemini(self):
+        frame = wx.Frame(None)
+        values = {k: audiomail.DEFAULTS[k] for k in audiomail.DEFAULTS}
+        dlg = dialogs.SettingsDialog(frame, dict(values, ai_summary_provider="gemini"), {})
+        self.assertTrue(dlg.ai_key_hint.IsShown())
+        dlg.ai_provider.SetSelection(0)
+        dlg.on_ai_provider(types.SimpleNamespace(Skip=lambda: None))
+        self.assertFalse(dlg.ai_key_hint.IsShown())
+        dlg.Destroy()
+        frame.Destroy()
+
+
 if __name__ == "__main__":
     unittest.main()

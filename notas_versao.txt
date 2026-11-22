@@ -3,6 +3,12 @@
 Copiado das versões publicadas no GitHub (python release_notes.py --atualizar).
 Vai dentro do programa, para as notas aparecerem mesmo sem internet.
 
+## 1.0.19 · 22 de novembro de 2026
+### Novidades
+
+- **Botão para conseguir a chave de API (Configurações, Resumo com IA):** abre direto a página da OpenAI ou do Google Gemini onde se cria a chave, conforme o provedor escolhido. Depois, o foco volta para o campo da chave, pronto para colar.
+- **Regras novas do Google para as chaves:** com o Gemini escolhido, as Configurações explicam que o Google agora recusa chaves antigas sem restrição e bloqueia as que ficaram muito tempo sem uso. Se o Google recusar a chave, o erro explica o motivo e mostra onde criar uma nova.
+
 ## 1.0.18 · 17 de novembro de 2026
 ### Novidades
 

@@ -1217,6 +1217,26 @@ _TEXT['es'].update({  # bloqueio com PIN
     'Mensagens guardadas no computador': 'Mensajes guardados en el equipo',
 })
 
+_TEXT['en'].update({  # botão da chave de API
+    'Conseguir a chave de API da %s (abre o site)': 'Get an API key from %s (opens the website)',
+    'Conseguir a chave de API (veja o site do seu serviço)': "Get an API key (see your service's website)",
+})
+
+_TEXT['es'].update({  # botão da chave de API
+    'Conseguir a chave de API da %s (abre o site)': 'Conseguir la clave de API de %s (abre el sitio web)',
+    'Conseguir a chave de API (veja o site do seu serviço)': 'Conseguir la clave de API (consulte el sitio de su servicio)',
+})
+
+_TEXT['en'].update({  # chaves do Gemini
+    'No Google, a chave fica ligada a um projeto do Google Cloud, criado sozinho na primeira vez. Desde maio de 2026, o Google recusa chaves antigas sem restrição e bloqueia as que ficaram muito tempo sem uso. Se o resumo der erro de chave, crie uma chave nova pelo botão acima.': 'At Google, the key is tied to a Google Cloud project, created automatically the first time. Since May 2026, Google rejects old unrestricted keys and blocks keys left unused for a long time. If the summary gives a key error, create a new key with the button above.',
+    'O Google recusou a chave. Desde maio de 2026, ele recusa chaves antigas sem restrição e bloqueia as que ficaram muito tempo sem uso. Crie uma chave nova em https://aistudio.google.com/apikey (botão Conseguir a chave de API, nas Configurações).': 'Google rejected the key. Since May 2026, it rejects old unrestricted keys and blocks keys left unused for a long time. Create a new key at https://aistudio.google.com/apikey (Get an API key button, in Settings).',
+})
+
+_TEXT['es'].update({  # chaves do Gemini
+    'No Google, a chave fica ligada a um projeto do Google Cloud, criado sozinho na primeira vez. Desde maio de 2026, o Google recusa chaves antigas sem restrição e bloqueia as que ficaram muito tempo sem uso. Se o resumo der erro de chave, crie uma chave nova pelo botão acima.': 'En Google, la clave está ligada a un proyecto de Google Cloud, que se crea solo la primera vez. Desde mayo de 2026, Google rechaza las claves antiguas sin restricción y bloquea las que quedaron mucho tiempo sin uso. Si el resumen da un error de clave, cree una clave nueva con el botón de arriba.',
+    'O Google recusou a chave. Desde maio de 2026, ele recusa chaves antigas sem restrição e bloqueia as que ficaram muito tempo sem uso. Crie uma chave nova em https://aistudio.google.com/apikey (botão Conseguir a chave de API, nas Configurações).': 'Google rechazó la clave. Desde mayo de 2026, rechaza las claves antiguas sin restricción y bloquea las que quedaron mucho tiempo sin uso. Cree una clave nueva en https://aistudio.google.com/apikey (botón Conseguir la clave de API, en Configuración).',
+})
+
 _language = "pt"
 
 

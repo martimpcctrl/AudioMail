@@ -36,6 +36,18 @@ def _request(url, headers, payload):
         raise SummaryError(i18n.tr("A API de IA devolveu uma resposta que o AudioMail não reconheceu.")) from exc
 
 
+GEMINI_KEY_TIP = ("O Google recusou a chave. Desde maio de 2026, ele recusa chaves antigas sem restrição "
+                  "e bloqueia as que ficaram muito tempo sem uso. Crie uma chave nova em "
+                  "https://aistudio.google.com/apikey (botão Conseguir a chave de API, nas Configurações).")
+
+
+def gemini_key_problem(message):
+    """True se o erro do Gemini é por causa da chave (recusada, bloqueada, sem restrição)."""
+    text = (message or "").lower()
+    return any(word in text for word in ("api key", "api_key", "unrestricted", "blocked",
+                                         "permission_denied", "permission denied"))
+
+
 def summarize(text, provider, api_key, model, endpoint="", language="português"):
     instructions = (
         "Resuma o conteúdo de e-mail abaixo em %s. Seja claro e breve. Destaque o assunto "
@@ -122,11 +134,16 @@ def ask(provider, api_key, model, endpoint, system, prompt, image=None, max_toke
             import base64
             parts.append({"inline_data": {"mime_type": image[1],
                                           "data": base64.b64encode(image[0]).decode("ascii")}})
-        data = _request(url, {"x-goog-api-key": api_key}, {
-            "contents": [{"parts": parts}],
-            "systemInstruction": {"parts": [{"text": system}]},
-            "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.2},
-        })
+        try:
+            data = _request(url, {"x-goog-api-key": api_key}, {
+                "contents": [{"parts": parts}],
+                "systemInstruction": {"parts": [{"text": system}]},
+                "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.2},
+            })
+        except SummaryError as exc:
+            if gemini_key_problem(str(exc)):
+                raise SummaryError("%s\n\n%s" % (exc, i18n.tr(GEMINI_KEY_TIP))) from exc
+            raise
         result = "\n".join(part.get("text", "") for candidate in data.get("candidates", [])
                            for part in candidate.get("content", {}).get("parts", [])
                            if part.get("text")).strip()

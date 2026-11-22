@@ -152,6 +152,8 @@ Ordem do Tab:
 ## Resumir com IA
 - Abra uma mensagem e escolha Resumir com IA. Na primeira vez, o AudioMail pede autorização antes de enviar o texto ao provedor.
 - Em Configurações, Resumo com IA, escolha OpenAI, Gemini ou outro serviço compatível com a API OpenAI. Informe o modelo e sua própria chave de API. Para outro serviço, informe também o endereço base.
+- Logo abaixo do campo Chave de API fica o botão Conseguir a chave de API: ele abre no navegador a página da OpenAI (https://platform.openai.com/api-keys) ou do Google Gemini (https://aistudio.google.com/apikey), conforme o provedor escolhido. Crie a chave lá, copie e cole no campo. Para outro serviço compatível, o botão fica desligado: veja no site do seu serviço.
+- No Google Gemini, a chave fica ligada a um projeto do Google Cloud, criado sozinho na primeira vez. Desde maio de 2026, o Google recusa chaves antigas sem restrição e bloqueia as que ficaram muito tempo sem uso. Se o resumo der erro de chave, o AudioMail explica e basta criar uma chave nova pelo botão.
 - A chave fica protegida pela criptografia do Windows neste computador. A API pode gerar cobrança na conta do provedor; a assinatura do ChatGPT não inclui automaticamente o uso da API.
 - O resumo inclui o texto e os cabeçalhos das mensagens da conversa. Anexos não são enviados.
 

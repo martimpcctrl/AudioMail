@@ -22,6 +22,25 @@ import settings_extras
 from common import default_sound_path, get_ai_api_key, pick_sound_file, set_name
 
 
+# onde cada provedor de IA cria a chave de API (o botão das Configurações abre a página)
+AI_KEY_PAGES = {
+    "openai": ("OpenAI", "https://platform.openai.com/api-keys"),
+    "gemini": ("Google Gemini", "https://aistudio.google.com/apikey"),
+}
+
+
+GEMINI_KEY_HINT = ("No Google, a chave fica ligada a um projeto do Google Cloud, criado sozinho na primeira vez. "
+                   "Desde maio de 2026, o Google recusa chaves antigas sem restrição e bloqueia as que ficaram "
+                   "muito tempo sem uso. Se o resumo der erro de chave, crie uma chave nova pelo botão acima.")
+
+
+def ai_key_button_label(provider):
+    """O texto do botão: diz de qual provedor é a página; serviço compatível não tem página única."""
+    if provider in AI_KEY_PAGES:
+        return i18n.tr("Conseguir a chave de API da %s (abre o site)") % AI_KEY_PAGES[provider][0]
+    return i18n.tr("Conseguir a chave de API (veja o site do seu serviço)")
+
+
 # ---------- entrada ----------
 
 APP_PASSWORD_URL = "https://myaccount.google.com/apppasswords"
@@ -270,6 +289,15 @@ class SettingsDialog(wx.Dialog):
         group.Add(wx.StaticText(panel, label=label), 0, wx.LEFT | wx.TOP, 8)
         self.ai_api_key = set_name(wx.TextCtrl(panel, style=wx.TE_PASSWORD), label)
         group.Add(self.ai_api_key, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+        self.ai_key_page = wx.Button(panel, label=ai_key_button_label(provider))
+        self.ai_key_page.Bind(wx.EVT_BUTTON, self.on_ai_key_page)
+        self.ai_key_page.Enable(provider in AI_KEY_PAGES)
+        group.Add(self.ai_key_page, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+        # as regras novas do Google para as chaves (maio de 2026)
+        self.ai_key_hint = wx.StaticText(panel, label=i18n.tr(GEMINI_KEY_HINT))
+        self.ai_key_hint.Wrap(480)
+        self.ai_key_hint.Show(provider == "gemini")
+        group.Add(self.ai_key_hint, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         self.ai_key_status = wx.StaticText(panel)
         self.ai_remove_key = wx.CheckBox(panel, label=i18n.tr("Apagar a chave salva deste provedor"))
         group.Add(self.ai_key_status, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
@@ -355,8 +383,27 @@ class SettingsDialog(wx.Dialog):
             self.ai_model.SetValue(defaults[provider])
         self._last_ai_model = defaults[provider]
         self.ai_endpoint.Enable(provider == "compatible")
+        self.ai_key_page.SetLabel(ai_key_button_label(provider))
+        self.ai_key_page.Enable(provider in AI_KEY_PAGES)
+        self.ai_key_hint.Show(provider == "gemini")
+        self.ai_key_page.GetParent().Layout()
+        self.Layout()
         self.refresh_ai_key_status()
         evt.Skip()
+
+    def on_ai_key_page(self, evt=None):
+        provider = self.ai_provider_codes[self.ai_provider.GetSelection()]
+        if provider not in AI_KEY_PAGES:
+            return
+        name, url = AI_KEY_PAGES[provider]
+        try:
+            opened = webbrowser.open(url)
+        except Exception:
+            opened = False
+        if not opened:
+            i18n.message_box(i18n.tr("Não consegui abrir o navegador. Abra este endereço você mesmo:\n\n%s") % url,
+                             "Resumo com IA", wx.OK | wx.ICON_INFORMATION, self)
+        self.ai_api_key.SetFocus()   # volta para o campo, pronto para colar a chave
 
     def refresh_ai_key_status(self, evt=None):
         provider = self.ai_provider_codes[self.ai_provider.GetSelection()]
